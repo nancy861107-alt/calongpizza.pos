@@ -548,17 +548,6 @@ select {
   align-items: center;
 }
 
-.keypad-mode {
-  min-height: 34px;
-  padding: 8px 10px;
-  border: 1px solid var(--line);
-  border-radius: 8px;
-  background: #f8faf6;
-  color: var(--accent-strong);
-  font-size: 13px;
-  font-weight: 900;
-}
-
 .segmented {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -726,11 +715,6 @@ select {
 
   body[data-view="checkout"] .payment-box {
     gap: 8px;
-  }
-
-  body[data-view="checkout"] .keypad-mode {
-    min-height: 30px;
-    padding: 6px 10px;
   }
 
   body[data-view="checkout"] .cash-keypad {

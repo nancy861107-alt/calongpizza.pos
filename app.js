@@ -147,7 +147,6 @@ const els = {
   cashReceivedInput: document.querySelector("#cashReceivedInput"),
   cashReceivedLabel: document.querySelector("#cashReceivedLabel"),
   cashKeypad: document.querySelector("#cashKeypad"),
-  keypadModeText: document.querySelector("#keypadModeText"),
   changeValue: document.querySelector("#changeValue"),
   checkoutButton: document.querySelector("#checkoutButton"),
   clearCartButton: document.querySelector("#clearCartButton"),
@@ -423,11 +422,9 @@ function updateKeypadMode() {
       state.quantityEditValue = "";
       state.quantityEditFresh = false;
     }
-    els.keypadModeText.textContent = "數字鍵盤：收款金額";
     els.cashKeypad.setAttribute("aria-label", "現金數字鍵盤");
     return;
   }
-  els.keypadModeText.textContent = `數字鍵盤：修改「${item.name}」數量`;
   els.cashKeypad.setAttribute("aria-label", `修改${item.name}數量`);
 }
 

@@ -1,10 +1,10 @@
-const CACHE_NAME = "pos-system-20260703-checkout-layout-tight";
+const CACHE_NAME = "pos-system-20260703-remove-keypad-label";
 const ASSETS = [
   "./",
   "./index.html",
-  "./styles.css?v=20260703-checkout-layout-tight",
-  "./keypad-helpers.js?v=20260703-checkout-layout-tight",
-  "./app.js?v=20260703-checkout-layout-tight",
+  "./styles.css?v=20260703-remove-keypad-label",
+  "./keypad-helpers.js?v=20260703-remove-keypad-label",
+  "./app.js?v=20260703-remove-keypad-label",
   "./manifest.webmanifest",
   "./app-icon.svg",
   "./calong-logo.jpg"
