@@ -1,10 +1,10 @@
-const CACHE_NAME = "pos-system-20260703-checkout-sound-settings";
+const CACHE_NAME = "pos-system-20260703-remove-discount-label";
 const ASSETS = [
   "./",
   "./index.html",
-  "./styles.css?v=20260703-checkout-sound-settings",
-  "./keypad-helpers.js?v=20260703-checkout-sound-settings",
-  "./app.js?v=20260703-checkout-sound-settings",
+  "./styles.css?v=20260703-remove-discount-label",
+  "./keypad-helpers.js?v=20260703-remove-discount-label",
+  "./app.js?v=20260703-remove-discount-label",
   "./manifest.json",
   "./manifest.webmanifest",
   "./app-icon.svg",

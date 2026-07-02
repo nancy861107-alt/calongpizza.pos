@@ -452,16 +452,10 @@ select {
 
 .adjustments {
   display: grid;
-  grid-template-columns: auto minmax(0, 1fr) auto;
+  grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
   gap: 10px;
   margin: 16px 0 8px;
-}
-
-.discount-label {
-  color: var(--muted);
-  font-size: 13px;
-  font-weight: 800;
 }
 
 .auto-discount-note {
