@@ -836,15 +836,21 @@ select {
 }
 
 .sheet-fields input,
+.sheet-fields textarea,
 .mini-grid input,
 #inventoryTable input {
   width: 100%;
-  height: 36px;
-  padding: 0 10px;
+  min-height: 36px;
+  padding: 8px 10px;
   border: 1px solid var(--line);
   border-radius: 8px;
   background: white;
   color: var(--ink);
+}
+
+.sheet-fields textarea {
+  min-height: 86px;
+  resize: vertical;
 }
 
 .sheet-mini-table {
