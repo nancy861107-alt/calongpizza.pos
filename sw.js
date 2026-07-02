@@ -1,9 +1,9 @@
-const CACHE_NAME = "pos-system-20260702-account-card";
+const CACHE_NAME = "pos-system-20260702-daily-sales-expire";
 const ASSETS = [
   "./",
   "./index.html",
-  "./styles.css?v=20260702-account-card",
-  "./app.js?v=20260702-account-card",
+  "./styles.css?v=20260702-daily-sales-expire",
+  "./app.js?v=20260702-daily-sales-expire",
   "./manifest.webmanifest",
   "./app-icon.svg",
   "./calong-logo.jpg"

@@ -25,8 +25,20 @@ const currency = new Intl.NumberFormat("zh-TW", {
   maximumFractionDigits: 0,
 });
 
-const todayKey = () => new Date().toISOString().slice(0, 10);
-const monthKey = () => new Date().toISOString().slice(0, 7);
+function dateKeyFrom(value = new Date()) {
+  const date = value instanceof Date ? value : new Date(value);
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+function monthKeyFrom(value = new Date()) {
+  return dateKeyFrom(value).slice(0, 7);
+}
+
+const todayKey = () => dateKeyFrom();
+const monthKey = () => monthKeyFrom();
 
 const state = {
   products: load("pos-products", defaultProducts),
@@ -196,6 +208,17 @@ function syncStateFromStorage() {
   state.categories = load("pos-categories", defaultCategories);
   state.sales = load("pos-sales", []);
   normalizeProducts();
+  return purgeExpiredSales({ saveCloud: false });
+}
+
+function purgeExpiredSales(options = {}) {
+  const currentDate = todayKey();
+  const salesToday = state.sales.filter((sale) => dateKeyFrom(sale.createdAt) === currentDate);
+  if (salesToday.length === state.sales.length) return false;
+  state.sales = salesToday;
+  localStorage.setItem("pos-sales", JSON.stringify(state.sales));
+  if (options.saveCloud !== false) saveCloudValue("pos-sales", state.sales);
+  return true;
 }
 
 async function saveCloudValue(key, value) {
@@ -224,8 +247,9 @@ async function syncFromCloud(options = {}) {
       localStorage.setItem(key, JSON.stringify(value));
     });
     cloudSync.ready = true;
-    syncStateFromStorage();
+    const didPurgeExpiredSales = syncStateFromStorage();
     if (options.render !== false) renderAll();
+    if (didPurgeExpiredSales) saveCloudValue("pos-sales", state.sales);
   } catch {
     cloudSync.ready = false;
   } finally {
@@ -410,6 +434,7 @@ function renderTotals() {
 }
 
 function checkout() {
+  purgeExpiredSales();
   if (state.cart.length === 0) {
     alert("購物車目前沒有品項。");
     return;
@@ -445,11 +470,11 @@ function paymentLabel(method) {
 function reportSales() {
   if (state.reportMode === "month") {
     const selectedMonth = els.reportMonthInput.value || monthKey();
-    return state.sales.filter((sale) => sale.createdAt.slice(0, 7) === selectedMonth);
+    return state.sales.filter((sale) => monthKeyFrom(sale.createdAt) === selectedMonth);
   }
 
   const selectedDate = els.reportDateInput.value || todayKey();
-  return state.sales.filter((sale) => sale.createdAt.slice(0, 10) === selectedDate);
+  return state.sales.filter((sale) => dateKeyFrom(sale.createdAt) === selectedDate);
 }
 
 function selectedReportDate() {
@@ -980,7 +1005,7 @@ async function exportMonthlyReportExcel() {
   const grossSales = sales.reduce((sum, sale) => sum + sale.totals.subtotal, 0);
   const discountTotal = sales.reduce((sum, sale) => sum + (sale.totals.discount || 0), 0);
   const salesByDate = sales.reduce((grouped, sale) => {
-    const date = sale.createdAt.slice(0, 10);
+    const date = dateKeyFrom(sale.createdAt);
     if (!grouped[date]) grouped[date] = { orders: 0, gross: 0, discount: 0, net: 0 };
     grouped[date].orders += 1;
     grouped[date].gross += sale.totals.subtotal;
@@ -1029,7 +1054,7 @@ function filteredTransactionDetails() {
   const query = els.detailSearchInput.value.trim().toLowerCase();
 
   return state.sales.filter((sale) => {
-    const saleDate = sale.createdAt.slice(0, 10);
+    const saleDate = dateKeyFrom(sale.createdAt);
     const matchesStart = !startDate || saleDate >= startDate;
     const matchesEnd = !endDate || saleDate <= endDate;
     const searchable = `${paymentLabel(sale.payment)} ${sale.items
@@ -1650,14 +1675,31 @@ function tickClock() {
   });
 }
 
+let activeBusinessDate = todayKey();
+
+function checkDailySalesExpiration() {
+  const currentDate = todayKey();
+  const didDateChange = currentDate !== activeBusinessDate;
+  const didPurgeExpiredSales = purgeExpiredSales();
+  if (!didDateChange && !didPurgeExpiredSales) return;
+  activeBusinessDate = currentDate;
+  els.reportDateInput.value = currentDate;
+  els.reportMonthInput.value = monthKey();
+  resetDetailFiltersToToday();
+  renderSales();
+  renderTransactionDetails();
+}
+
 els.reportDateInput.value = todayKey();
 els.reportMonthInput.value = monthKey();
 normalizeProducts();
+purgeExpiredSales();
 initEvents();
 renderAll();
 syncFromCloud();
 tickClock();
 setInterval(tickClock, 1000);
+setInterval(checkDailySalesExpiration, 60000);
 setInterval(() => syncFromCloud({ render: true }), 5000);
 
 if ("serviceWorker" in navigator) {
