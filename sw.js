@@ -1,9 +1,9 @@
-const CACHE_NAME = "pos-system-20260703-remove-default-pizzas";
+const CACHE_NAME = "pos-system-20260703-show-new-products";
 const ASSETS = [
   "./",
   "./index.html",
-  "./styles.css?v=20260703-remove-default-pizzas",
-  "./app.js?v=20260703-remove-default-pizzas",
+  "./styles.css?v=20260703-show-new-products",
+  "./app.js?v=20260703-show-new-products",
   "./manifest.webmanifest",
   "./app-icon.svg",
   "./calong-logo.jpg"

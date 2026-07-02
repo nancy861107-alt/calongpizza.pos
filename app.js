@@ -218,15 +218,17 @@ function purgeExpiredSales(options = {}) {
 }
 
 async function saveCloudValue(key, value) {
-  if (!cloudSync.enabled || !cloudSync.ready || cloudSync.syncing) return;
+  if (!cloudSync.enabled || !cloudSync.ready || cloudSync.syncing) return false;
   try {
     await fetch(`/api/storage/${encodeURIComponent(key)}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ value }),
     });
+    return true;
   } catch {
     // Keep local data available if the cloud host is temporarily unreachable.
+    return false;
   }
 }
 
@@ -1322,7 +1324,7 @@ function beginDailyDrag(card) {
   els.dailyProductSections.classList.add("drag-over");
 }
 
-function saveProduct(event) {
+async function saveProduct(event) {
   event.preventDefault();
   const data = new FormData(els.productForm);
   const productId = data.get("id");
@@ -1352,7 +1354,9 @@ function saveProduct(event) {
     });
   }
 
-  save("pos-products", state.products);
+  localStorage.setItem("pos-products", JSON.stringify(state.products));
+  if (cloudSync.ready) await saveCloudValue("pos-products", state.products);
+  state.selectedCategory = productData.category;
   resetProductForm();
   renderAll();
 }
