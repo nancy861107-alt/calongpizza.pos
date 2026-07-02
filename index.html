@@ -16,7 +16,7 @@
     <link rel="apple-touch-icon" sizes="512x512" href="./icon-512.png" />
     <link rel="icon" href="./app-icon.svg" type="image/svg+xml" />
     <link rel="icon" href="./icon-192.png" type="image/png" />
-    <link rel="stylesheet" href="./styles.css?v=20260703-remove-discount-label" />
+    <link rel="stylesheet" href="./styles.css?v=20260703-custom-cash-register-sound" />
   </head>
   <body data-view="checkout">
     <div class="app-shell">
@@ -299,6 +299,7 @@
                 <label>
                   結帳音效
                   <select name="checkoutSound" id="checkoutSoundSelect">
+                    <option value="customCashRegister">音檔：收銀機音效</option>
                     <option value="drawer">叮 + 抽屜開</option>
                     <option value="classic">傳統收銀機</option>
                     <option value="beep">電子提示音</option>
@@ -334,7 +335,7 @@
       </main>
     </div>
 
-    <script src="./keypad-helpers.js?v=20260703-remove-discount-label"></script>
-    <script src="./app.js?v=20260703-remove-discount-label"></script>
+    <script src="./keypad-helpers.js?v=20260703-custom-cash-register-sound"></script>
+    <script src="./app.js?v=20260703-custom-cash-register-sound"></script>
   </body>
 </html>

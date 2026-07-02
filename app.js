@@ -37,7 +37,7 @@ function monthKeyFrom(value = new Date()) {
 const todayKey = () => dateKeyFrom();
 const monthKey = () => monthKeyFrom();
 const defaultSettings = {
-  checkoutSound: "drawer",
+  checkoutSound: "customCashRegister",
 };
 
 const state = {
@@ -532,6 +532,12 @@ function renderTotals() {
 
 function playCheckoutSound(soundName = state.settings.checkoutSound) {
   if (soundName === "none") return;
+  if (soundName === "customCashRegister") {
+    const audio = new Audio("./checkout-cash-register.mp3");
+    audio.currentTime = 0;
+    audio.play().catch(() => {});
+    return;
+  }
   const AudioContextCtor = window.AudioContext || window.webkitAudioContext;
   if (!AudioContextCtor) return;
 

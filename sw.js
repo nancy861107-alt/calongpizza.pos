@@ -1,16 +1,17 @@
-const CACHE_NAME = "pos-system-20260703-remove-discount-label";
+const CACHE_NAME = "pos-system-20260703-custom-cash-register-sound";
 const ASSETS = [
   "./",
   "./index.html",
-  "./styles.css?v=20260703-remove-discount-label",
-  "./keypad-helpers.js?v=20260703-remove-discount-label",
-  "./app.js?v=20260703-remove-discount-label",
+  "./styles.css?v=20260703-custom-cash-register-sound",
+  "./keypad-helpers.js?v=20260703-custom-cash-register-sound",
+  "./app.js?v=20260703-custom-cash-register-sound",
   "./manifest.json",
   "./manifest.webmanifest",
   "./app-icon.svg",
   "./icon-192.png",
   "./icon-512.png",
-  "./calong-logo.jpg"
+  "./calong-logo.jpg",
+  "./checkout-cash-register.mp3"
 ];
 
 self.addEventListener("install", (event) => {
