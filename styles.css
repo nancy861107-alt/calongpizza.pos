@@ -591,6 +591,77 @@ select {
   touch-action: manipulation;
 }
 
+@media (min-width: 900px) {
+  body[data-view="checkout"] {
+    height: 100dvh;
+    overflow: hidden;
+  }
+
+  body[data-view="checkout"] .app-shell {
+    height: 100dvh;
+    min-height: 0;
+    overflow: hidden;
+  }
+
+  body[data-view="checkout"] .sidebar,
+  body[data-view="checkout"] .workspace {
+    min-height: 0;
+    overflow: hidden;
+  }
+
+  body[data-view="checkout"] .workspace {
+    display: flex;
+    flex-direction: column;
+  }
+
+  body[data-view="checkout"] .topbar {
+    flex: 0 0 auto;
+  }
+
+  body[data-view="checkout"] #checkoutView.active {
+    display: flex;
+    flex: 1 1 auto;
+    min-height: 0;
+  }
+
+  body[data-view="checkout"] .checkout-grid {
+    flex: 1 1 auto;
+    min-height: 0;
+    width: 100%;
+  }
+
+  body[data-view="checkout"] .product-panel,
+  body[data-view="checkout"] .cart-panel {
+    min-height: 0;
+    max-height: 100%;
+    overflow: hidden;
+  }
+
+  body[data-view="checkout"] .product-panel {
+    display: flex;
+    flex-direction: column;
+  }
+
+  body[data-view="checkout"] .category-tabs {
+    flex: 0 0 auto;
+  }
+
+  body[data-view="checkout"] .product-grid {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding-right: 4px;
+  }
+
+  body[data-view="checkout"] .cart-list {
+    flex: 1 1 auto;
+    min-height: 0;
+    max-height: none;
+    overscroll-behavior: contain;
+  }
+}
+
 .report-toolbar {
   display: flex;
   align-items: center;

@@ -1357,6 +1357,7 @@ async function saveProduct(event) {
 
 function switchView(viewName) {
   const titles = { checkout: "快速結帳", sales: "日報表", details: "交易明細", products: "商品後台" };
+  document.body.dataset.view = viewName;
   els.viewTitle.textContent = viewName === "sales" && state.reportMode === "month" ? "月報表" : titles[viewName];
   els.navButtons.forEach((button) => button.classList.toggle("active", button.dataset.view === viewName));
   els.views.forEach((view) => view.classList.remove("active"));

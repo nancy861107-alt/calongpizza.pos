@@ -1,9 +1,9 @@
-const CACHE_NAME = "pos-system-20260703-category-quantity-total";
+const CACHE_NAME = "pos-system-20260703-fixed-checkout";
 const ASSETS = [
   "./",
   "./index.html",
-  "./styles.css?v=20260703-category-quantity-total",
-  "./app.js?v=20260703-category-quantity-total",
+  "./styles.css?v=20260703-fixed-checkout",
+  "./app.js?v=20260703-fixed-checkout",
   "./manifest.webmanifest",
   "./app-icon.svg",
   "./calong-logo.jpg"
