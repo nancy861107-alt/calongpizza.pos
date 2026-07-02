@@ -452,7 +452,7 @@ select {
 
 .adjustments {
   display: grid;
-  grid-template-columns: auto 1fr;
+  grid-template-columns: auto minmax(0, 1fr) auto;
   align-items: center;
   gap: 10px;
   margin: 16px 0 8px;
@@ -473,6 +473,15 @@ select {
   color: #9a5200;
   font-size: 14px;
   font-weight: 900;
+}
+
+.cancel-discount-button {
+  white-space: nowrap;
+}
+
+.cancel-discount-button:disabled {
+  opacity: 0.58;
+  cursor: default;
 }
 
 .adjustments label,

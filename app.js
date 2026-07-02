@@ -45,6 +45,7 @@ const state = {
   payment: "cash",
   reportMode: "day",
   selectedCategory: "all",
+  discountCanceled: false,
   quantityEditProductId: null,
   quantityEditValue: "",
   quantityEditFresh: false,
@@ -141,6 +142,7 @@ const els = {
   cartList: document.querySelector("#cartList"),
   cartCount: document.querySelector("#cartCount"),
   discountRuleText: document.querySelector("#discountRuleText"),
+  cancelDiscountButton: document.querySelector("#cancelDiscountButton"),
   subtotalValue: document.querySelector("#subtotalValue"),
   discountValue: document.querySelector("#discountValue"),
   totalValue: document.querySelector("#totalValue"),
@@ -269,7 +271,7 @@ function money(value) {
 
 function totals() {
   const subtotal = state.cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
-  const discount = Math.min(subtotal, autoDiscount());
+  const discount = state.discountCanceled ? 0 : Math.min(subtotal, autoDiscount());
   const total = Math.max(0, subtotal - discount);
   const cashReceived = Number(els.cashReceivedInput.value || 0);
 
@@ -500,6 +502,8 @@ function renderTotals() {
   els.totalValue.textContent = money(currentTotals.total);
   els.changeValue.textContent = currentTotals.change >= 0 ? money(currentTotals.change) : "$0";
   els.discountRuleText.textContent = `主餐 ${breakdown.mainCount}、炸物 ${breakdown.friedCount}、飲料 ${breakdown.drinkCount}，目前符合 ${breakdown.setCount} 組`;
+  els.cancelDiscountButton.disabled = state.discountCanceled || currentTotals.subtotal === 0;
+  els.cancelDiscountButton.textContent = state.discountCanceled ? "已取消折扣" : "取消折扣";
 }
 
 function checkout() {
@@ -526,6 +530,7 @@ function checkout() {
   state.sales.unshift(sale);
   save("pos-sales", state.sales);
   state.cart = [];
+  state.discountCanceled = false;
   els.cashReceivedInput.value = 0;
   renderCart();
   renderSales();
@@ -1528,7 +1533,12 @@ function initEvents() {
   els.checkoutButton.addEventListener("click", checkout);
   els.clearCartButton.addEventListener("click", () => {
     state.cart = [];
+    state.discountCanceled = false;
     renderCart();
+  });
+  els.cancelDiscountButton.addEventListener("click", () => {
+    state.discountCanceled = true;
+    renderTotals();
   });
   els.categoryForm.addEventListener("submit", saveCategory);
   els.cancelCategoryEditButton.addEventListener("click", resetCategoryForm);

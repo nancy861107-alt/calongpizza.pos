@@ -1,10 +1,10 @@
-const CACHE_NAME = "pos-system-20260703-pwa-standalone";
+const CACHE_NAME = "pos-system-20260703-cancel-discount";
 const ASSETS = [
   "./",
   "./index.html",
-  "./styles.css?v=20260703-pwa-standalone",
-  "./keypad-helpers.js?v=20260703-pwa-standalone",
-  "./app.js?v=20260703-pwa-standalone",
+  "./styles.css?v=20260703-cancel-discount",
+  "./keypad-helpers.js?v=20260703-cancel-discount",
+  "./app.js?v=20260703-cancel-discount",
   "./manifest.json",
   "./manifest.webmanifest",
   "./app-icon.svg",
