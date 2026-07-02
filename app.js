@@ -305,6 +305,7 @@ function discountBreakdown() {
 
 function renderCategories() {
   const currentCategories = categories();
+  const selectedProductCategory = normalizeCategoryName(els.productCategorySelect.value);
   if (!currentCategories.includes(state.selectedCategory)) {
     state.selectedCategory = currentCategories[0] || "";
   }
@@ -330,6 +331,9 @@ function renderCategories() {
     option.textContent = category;
     els.productCategorySelect.append(option);
   });
+  if (currentCategories.includes(selectedProductCategory)) {
+    els.productCategorySelect.value = selectedProductCategory;
+  }
 }
 
 function renderProducts() {
@@ -1320,11 +1324,15 @@ function saveProduct(event) {
   const productId = data.get("id");
   const productData = {
     name: data.get("name").trim(),
-    category: data.get("category").trim(),
+    category: normalizeCategoryName(data.get("category")),
     price: Number(data.get("price")),
   };
 
   if (!productData.name || !productData.category || Number.isNaN(productData.price)) return;
+  if (!categories().includes(productData.category)) {
+    alert("商品分類讀取錯誤，請重新選擇分類後再新增。");
+    return;
+  }
 
   if (productId) {
     state.products = state.products.map((product) =>
