@@ -13,7 +13,9 @@
 
 建議先用 Render 部署，因為這個專案已經準備好 `render.yaml`。
 
-正式使用一定要開永久磁碟，資料才不會因為主機重啟而消失。
+目前設定為 Render 免費方案，資料會放在暫存空間，適合先測試雲端網址。
+
+正式使用建議改成永久磁碟，資料才不會因為主機重啟或重新部署而消失。
 
 ## 上傳到 GitHub
 
@@ -49,22 +51,17 @@ npm run start
 6. 設定環境變數：
 
 ```text
-DATA_DIR=/var/data
+DATA_DIR=./data
 POS_USER=calong
 POS_PASSWORD=自己設定一組安全密碼
 ```
 
-7. 設定永久磁碟：
+免費方案不需要設定永久磁碟。
+
+資料會暫存在：
 
 ```text
-Mount Path: /var/data
-Size: 1 GB
-```
-
-資料會存在：
-
-```text
-/var/data/cloud-storage.json
+./data/cloud-storage.json
 ```
 
 ## 上線後怎麼用
@@ -87,6 +84,7 @@ https://你的-render-網址
 ## 注意事項
 
 - 正式使用一定要設定 `POS_USER` 和 `POS_PASSWORD`。
-- 正式使用一定要有永久磁碟。
+- 免費方案的暫存資料可能在重新部署、重啟或休眠後消失。
+- 正式收銀建議改用永久磁碟。
 - 如果未來有很多台 iPad 同時結帳，建議下一階段升級 SQLite 或真正資料庫。
 - 目前資料庫是 JSON 檔，適合單店、少量設備先使用。

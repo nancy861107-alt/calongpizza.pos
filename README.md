@@ -62,16 +62,18 @@ npm run start
 需要設定的環境變數：
 
 ```text
-DATA_DIR=/var/data
+DATA_DIR=./data
 POS_USER=calong
 POS_PASSWORD=自己設定一組安全密碼
 ```
 
-資料會存放在永久磁碟：
+目前設定是 Render 免費暫存方案，資料會暫存在：
 
 ```text
-/var/data/cloud-storage.json
+./data/cloud-storage.json
 ```
+
+免費暫存資料可能在重新部署、重啟或休眠後消失；正式收銀建議改用永久磁碟。
 
 正式外網使用時，一定要設定 `POS_USER` 和 `POS_PASSWORD`，否則任何知道網址的人都能打開系統。
 

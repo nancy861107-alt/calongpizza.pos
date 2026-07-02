@@ -2,17 +2,13 @@ services:
   - type: web
     name: calong-pos-system
     runtime: node
-    plan: starter
+    plan: free
     buildCommand: "npm install"
     startCommand: "npm run start"
     envVars:
       - key: DATA_DIR
-        value: /var/data
+        value: ./data
       - key: POS_USER
         sync: false
       - key: POS_PASSWORD
         sync: false
-    disk:
-      name: calong-pos-data
-      mountPath: /var/data
-      sizeGB: 1
