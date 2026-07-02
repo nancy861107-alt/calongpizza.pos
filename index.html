@@ -1,0 +1,310 @@
+<!doctype html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#15241d" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="卡隆收銀" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <title>卡隆收銀系統</title>
+    <link rel="manifest" href="./manifest.webmanifest" />
+    <link rel="apple-touch-icon" href="./app-icon.svg" />
+    <link rel="icon" href="./app-icon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="./styles.css?v=20260702-ipad-export-safe" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <aside class="sidebar">
+        <div class="brand">
+          <img class="brand-mark" src="./calong-logo.jpg" alt="卡隆" />
+          <div>
+            <h1>卡隆收銀</h1>
+            <p>今日櫃台</p>
+          </div>
+        </div>
+
+        <nav class="nav" aria-label="主要功能">
+          <button class="nav-button active" type="button" data-view="checkout" title="收銀">
+            <span class="icon">▦</span>
+            <span>收銀</span>
+          </button>
+          <button class="nav-button" type="button" data-view="sales" title="銷售紀錄">
+            <span class="icon">≡</span>
+            <span>銷售</span>
+          </button>
+          <button class="nav-button" type="button" data-view="details" title="交易明細">
+            <span class="icon">☷</span>
+            <span>明細</span>
+          </button>
+          <button class="nav-button" type="button" data-view="products" title="商品管理">
+            <span class="icon">＋</span>
+            <span>商品</span>
+          </button>
+        </nav>
+
+        <div class="store-card">
+          <span class="label">門市</span>
+          <strong>Corner Mart</strong>
+          <small id="clock">--:--</small>
+        </div>
+      </aside>
+
+      <main class="workspace">
+        <section class="topbar">
+          <div>
+            <h2 id="viewTitle">快速結帳</h2>
+          </div>
+        </section>
+
+        <section class="view active" id="checkoutView" aria-label="收銀畫面">
+          <div class="checkout-grid">
+            <section class="product-panel">
+              <div class="category-tabs" id="categoryTabs" role="tablist" aria-label="品項分類"></div>
+              <div class="product-grid" id="productGrid"></div>
+            </section>
+
+            <section class="cart-panel" aria-label="購物車">
+              <div class="panel-heading">
+                <div>
+                  <p class="eyebrow">目前交易</p>
+                  <h3>購物車</h3>
+                </div>
+                <div class="cart-heading-actions">
+                  <span id="cartCount" class="pill">0 件</span>
+                  <button class="ghost-button small" type="button" id="clearCartButton" title="清空購物車">清空</button>
+                </div>
+              </div>
+
+              <div class="cart-list" id="cartList"></div>
+
+              <div class="adjustments">
+                <span class="discount-label">顯示折扣</span>
+                <strong class="auto-discount-note" id="discountRuleText">主餐 0、炸物 0、飲料 0，目前符合 0 組</strong>
+              </div>
+
+              <dl class="totals">
+                <div>
+                  <dt>小計</dt>
+                  <dd id="subtotalValue">$0</dd>
+                </div>
+                <div>
+                  <dt>折扣</dt>
+                  <dd id="discountValue">-$0</dd>
+                </div>
+                <div class="grand-total">
+                  <dt>應收</dt>
+                  <dd id="totalValue">$0</dd>
+                </div>
+              </dl>
+
+              <div class="payment-box">
+                <label id="cashReceivedLabel">
+                  收到金額
+                  <input id="cashReceivedInput" type="number" min="0" value="0" />
+                </label>
+                <div class="cash-keypad" id="cashKeypad" aria-label="現金數字鍵盤">
+                  <button type="button" data-keypad="7">7</button>
+                  <button type="button" data-keypad="8">8</button>
+                  <button type="button" data-keypad="9">9</button>
+                  <button type="button" data-keypad="4">4</button>
+                  <button type="button" data-keypad="5">5</button>
+                  <button type="button" data-keypad="6">6</button>
+                  <button type="button" data-keypad="1">1</button>
+                  <button type="button" data-keypad="2">2</button>
+                  <button type="button" data-keypad="3">3</button>
+                  <button type="button" data-keypad="clear">清除</button>
+                  <button type="button" data-keypad="0">0</button>
+                  <button type="button" data-keypad="back">⌫</button>
+                </div>
+                <div class="change-line">
+                  <span>找零</span>
+                  <strong id="changeValue">$0</strong>
+                </div>
+                <button class="checkout-button" type="button" id="checkoutButton">完成結帳</button>
+              </div>
+            </section>
+          </div>
+        </section>
+
+        <section class="view" id="salesView" aria-label="銷售紀錄">
+          <div class="report-toolbar">
+            <div class="segmented compact" role="group" aria-label="報表範圍">
+              <button type="button" class="active" data-report="day">日報表</button>
+              <button type="button" data-report="month">月報表</button>
+            </div>
+            <input id="reportDateInput" type="date" aria-label="選擇日報表日期" />
+            <input id="reportMonthInput" type="month" aria-label="選擇月報表月份" />
+            <button class="primary-button small" type="button" id="exportReportButton">匯出到 Drive</button>
+          </div>
+          <div class="summary-strip">
+            <div>
+              <span class="label" id="reportRevenueLabel">今日營收</span>
+              <strong id="reportRevenue">$0</strong>
+            </div>
+            <div>
+              <span class="label">來客數</span>
+              <strong id="reportOrders">0</strong>
+            </div>
+            <div>
+              <span class="label">平均客單</span>
+              <strong id="averageOrder">$0</strong>
+            </div>
+            <div>
+              <span class="label">折扣總金額</span>
+              <strong id="reportItems">$0</strong>
+            </div>
+          </div>
+          <section class="daily-sheet" id="dailySheet">
+            <div class="daily-sheet-heading">
+              <h3>日結單</h3>
+              <div class="daily-heading-actions">
+                <span id="dailySheetDate">--</span>
+              </div>
+            </div>
+            <div class="daily-product-grid daily-utility-grid" id="dailyProductSections">
+              <div class="daily-column daily-category-column" id="dailyCategoryColumn"></div>
+              <div class="daily-column daily-utility-column" id="dailyUtilityColumn">
+                <section class="sheet-box daily-utility-card" data-daily-card="cash">
+                  <h4><span class="drag-handle sheet-drag-handle" aria-hidden="true">☰</span><span>現金盤點</span></h4>
+                  <div class="sheet-fields">
+                    <label>機上現金<input data-daily-field="machineCash" type="number" min="0" /></label>
+                    <label>-預備金<input data-daily-field="reserveCash" type="number" min="0" /></label>
+                  </div>
+                  <dl class="sheet-list compact-list">
+                    <div><dt>＝存銀金額</dt><dd id="cashDepositTotal">$0</dd></div>
+                    <div><dt>現金盤盈</dt><dd id="cashOver">$0</dd></div>
+                    <div><dt>現金盤筍</dt><dd id="cashShort">$0</dd></div>
+                  </dl>
+                </section>
+                <section class="sheet-box daily-utility-card" data-daily-card="other">
+                  <h4><span class="drag-handle sheet-drag-handle" aria-hidden="true">☰</span><span>登帳紀錄</span></h4>
+                  <dl class="sheet-list ledger-list">
+                    <div><dt>銷售總金額</dt><dd id="ledgerGrossSales">$0</dd></div>
+                    <div><dt>-折讓</dt><dd id="ledgerDiscount">$0</dd></div>
+                    <div><dt>=銷貨淨額</dt><dd id="ledgerNetSales">$0</dd></div>
+                  </dl>
+                </section>
+                <section class="sheet-box daily-utility-card" data-daily-card="inventory">
+                  <h4><span class="drag-handle sheet-drag-handle" aria-hidden="true">☰</span><span>現金紀錄</span></h4>
+                  <dl class="sheet-list ledger-list">
+                    <div><dt>＋預備金</dt><dd id="bookReserveCash">$0</dd></div>
+                    <div><dt>＝登帳現金</dt><dd id="bookCashTotal">$0</dd></div>
+                  </dl>
+                </section>
+                <section class="sheet-box sheet-table-box daily-utility-card" data-daily-card="payment">
+                  <h4><span class="drag-handle sheet-drag-handle" aria-hidden="true">☰</span><span>時段營收</span></h4>
+                  <table class="hourly-table">
+                    <thead>
+                      <tr>
+                        <th>時段</th>
+                        <th>金額</th>
+                        <th>時段</th>
+                        <th>金額</th>
+                      </tr>
+                    </thead>
+                    <tbody id="paymentReportTable"></tbody>
+                  </table>
+                </section>
+              </div>
+            </div>
+          </section>
+        </section>
+
+        <section class="view" id="detailsView" aria-label="交易明細">
+          <div class="detail-toolbar">
+            <label>
+              起始日期
+              <input id="detailStartDate" type="date" />
+            </label>
+            <label>
+              結束日期
+              <input id="detailEndDate" type="date" />
+            </label>
+            <label>
+              關鍵字
+              <input id="detailSearchInput" type="search" placeholder="搜尋品項或付款" />
+            </label>
+            <button class="ghost-button" type="button" id="clearDetailFiltersButton">今日明細</button>
+          </div>
+          <div class="summary-strip details-summary">
+            <div>
+              <span class="label">查詢筆數</span>
+              <strong id="detailOrderCount">0</strong>
+            </div>
+            <div>
+              <span class="label">查詢營收</span>
+              <strong id="detailRevenue">$0</strong>
+            </div>
+            <div>
+              <span class="label">折扣總金額</span>
+              <strong id="detailDiscountTotal">$0</strong>
+            </div>
+          </div>
+          <div class="table-wrap">
+            <div class="table-heading">
+              <h3>累計交易明細</h3>
+            </div>
+            <table>
+              <thead>
+                <tr>
+                  <th>時間</th>
+                  <th>品項</th>
+                  <th>小計</th>
+                  <th>折扣</th>
+                  <th>金額</th>
+                  <th>操作</th>
+                </tr>
+              </thead>
+              <tbody id="detailsTable"></tbody>
+            </table>
+          </div>
+        </section>
+
+        <section class="view" id="productsView" aria-label="商品管理">
+          <div class="management-grid">
+            <section class="table-wrap">
+              <div class="table-heading split-heading">
+                <h3>分類管理</h3>
+              </div>
+              <form class="category-form" id="categoryForm">
+                <input type="hidden" name="id" />
+                <label>
+                  分類名稱
+                  <input name="name" required placeholder="例如：六寸披薩" />
+                </label>
+                <div class="form-actions">
+                  <button class="primary-button" type="submit" id="saveCategoryButton">新增分類</button>
+                  <button class="ghost-button" type="button" id="cancelCategoryEditButton" hidden>取消</button>
+                </div>
+              </form>
+              <div class="category-sort-list" id="categoriesTable" aria-label="分類排序"></div>
+            </section>
+          </div>
+          <form class="product-form" id="productForm">
+            <input type="hidden" name="id" />
+            <label>
+              商品名稱
+              <input name="name" required placeholder="例如：夏威夷火腿鳳梨披薩" />
+            </label>
+            <label>
+              分類
+              <select name="category" required id="productCategorySelect"></select>
+            </label>
+            <label>
+              價格
+              <input name="price" required type="number" min="0" placeholder="180" />
+            </label>
+            <div class="form-actions">
+              <button class="primary-button" type="submit" id="saveProductButton">新增商品</button>
+              <button class="ghost-button" type="button" id="cancelEditButton" hidden>取消</button>
+            </div>
+          </form>
+          <div class="product-columns" id="productsTable" aria-label="商品排序"></div>
+        </section>
+      </main>
+    </div>
+
+    <script src="./app.js?v=20260702-ipad-export-safe"></script>
+  </body>
+</html>

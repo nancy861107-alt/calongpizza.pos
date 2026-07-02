@@ -1,0 +1,19 @@
+{
+  "name": "卡隆收銀系統",
+  "short_name": "卡隆收銀",
+  "description": "卡隆平板用收銀與日報表系統",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "landscape",
+  "background_color": "#f3f5f1",
+  "theme_color": "#15241d",
+  "icons": [
+    {
+      "src": "./app-icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
