@@ -12,10 +12,7 @@ function makeId() {
   return `id-${Date.now()}-${Math.random().toString(16).slice(2)}`;
 }
 
-const defaultProducts = [
-  { id: makeId(), name: "夏威夷火腿鳳梨披薩", category: "六吋披薩", price: 180, color: "#d97706" },
-  { id: makeId(), name: "鮪魚玉米披薩", category: "六吋披薩", price: 180, color: "#0f7b63" },
-];
+const defaultProducts = [];
 
 const defaultCategories = mainCategoryNames.map((name) => ({ id: makeId(), name }));
 
@@ -73,20 +70,21 @@ const legacyDemoNames = new Set([
   "環保提袋",
 ]);
 
+const removedDefaultProductNames = new Set(["夏威夷火腿鳳梨披薩", "鮪魚玉米披薩"]);
+
 function normalizeProducts() {
   state.products = state.products.map((product) => ({ ...product, category: normalizeCategoryName(product.category) }));
   state.cart = state.cart.map((item) => ({ ...item, category: normalizeCategoryName(item.category) }));
   state.categories = state.categories.map((category) => ({ ...category, name: normalizeCategoryName(category.name) }));
 
-  const hasPizza = state.products.some((product) => product.category === "六吋披薩");
   const isOnlyLegacyDemo =
     state.products.length > 0 && state.products.every((product) => legacyDemoNames.has(product.name));
 
   if (isOnlyLegacyDemo) {
     state.products = defaultProducts;
-  } else if (!hasPizza) {
-    state.products = [...defaultProducts, ...state.products];
   }
+  state.products = state.products.filter((product) => !removedDefaultProductNames.has(product.name));
+  state.cart = state.cart.filter((item) => !removedDefaultProductNames.has(item.name));
 
   const categoryByName = new Map();
   state.categories.forEach((category) => {
