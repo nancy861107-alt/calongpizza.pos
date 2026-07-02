@@ -9,6 +9,7 @@ const DATA_DIR = process.env.DATA_DIR || path.join(ROOT, "data");
 const DB_FILE = path.join(DATA_DIR, "cloud-storage.json");
 const AUTH_USER = process.env.POS_USER || "";
 const AUTH_PASSWORD = process.env.POS_PASSWORD || "";
+const AUTH_COOKIE = "calong_pos_auth";
 
 const MIME_TYPES = {
   ".html": "text/html; charset=utf-8",
@@ -71,20 +72,117 @@ function sendText(response, status, text) {
   response.end(text);
 }
 
+function authToken() {
+  return Buffer.from(`${AUTH_USER}:${AUTH_PASSWORD}`).toString("base64url");
+}
+
+function parseCookies(request) {
+  return Object.fromEntries(
+    (request.headers.cookie || "")
+      .split(";")
+      .map((cookie) => cookie.trim())
+      .filter(Boolean)
+      .map((cookie) => {
+        const [name, ...valueParts] = cookie.split("=");
+        return [name, decodeURIComponent(valueParts.join("="))];
+      }),
+  );
+}
+
 function isAuthorized(request) {
   if (!AUTH_USER || !AUTH_PASSWORD) return true;
+  const cookies = parseCookies(request);
+  if (cookies[AUTH_COOKIE] === authToken()) return true;
   const header = request.headers.authorization || "";
   if (!header.startsWith("Basic ")) return false;
   const decoded = Buffer.from(header.slice(6), "base64").toString("utf8");
   return decoded === `${AUTH_USER}:${AUTH_PASSWORD}`;
 }
 
-function requestAuth(response) {
-  response.writeHead(401, {
-    "WWW-Authenticate": 'Basic realm="Calong POS"',
-    "Content-Type": "text/plain; charset=utf-8",
+function loginPage(message = "") {
+  return `<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>卡隆收銀系統登入</title>
+  <style>
+    :root { color-scheme: light; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+    body { min-height: 100vh; margin: 0; display: grid; place-items: center; background: #f3f5f1; color: #17211b; }
+    main { width: min(420px, calc(100vw - 32px)); padding: 28px; border: 1px solid #d9dfd5; border-radius: 12px; background: white; box-shadow: 0 18px 45px rgba(23, 33, 27, .1); }
+    img { display: block; width: 120px; margin: 0 auto 18px; }
+    h1 { margin: 0 0 8px; font-size: 24px; text-align: center; }
+    p { margin: 0 0 18px; color: #637069; text-align: center; }
+    form { display: grid; gap: 14px; }
+    label { display: grid; gap: 6px; font-weight: 800; }
+    input { height: 46px; padding: 0 12px; border: 1px solid #d9dfd5; border-radius: 8px; font: inherit; }
+    button { height: 48px; border: 0; border-radius: 8px; background: #0f7b63; color: white; font: inherit; font-weight: 900; }
+    .error { margin-bottom: 14px; padding: 10px 12px; border-radius: 8px; background: #fff1f0; color: #b42318; font-weight: 800; text-align: center; }
+  </style>
+</head>
+<body>
+  <main>
+    <img src="/calong-logo.jpg" alt="卡隆" />
+    <h1>卡隆收銀系統</h1>
+    <p>請輸入帳號密碼</p>
+    ${message ? `<div class="error">${message}</div>` : ""}
+    <form method="post" action="/login">
+      <label>帳號<input name="username" autocomplete="username" required /></label>
+      <label>密碼<input name="password" type="password" autocomplete="current-password" required /></label>
+      <button type="submit">登入</button>
+    </form>
+  </main>
+</body>
+</html>`;
+}
+
+function requestAuth(request, response) {
+  if (request.url.startsWith("/api/")) {
+    sendJson(response, 401, { error: "需要登入" });
+    return;
+  }
+  response.writeHead(302, {
+    Location: "/login",
+    "Cache-Control": "no-store",
   });
-  response.end("需要登入");
+  response.end();
+}
+
+async function handleLogin(request, response) {
+  if (!AUTH_USER || !AUTH_PASSWORD) {
+    response.writeHead(302, { Location: "/" });
+    response.end();
+    return;
+  }
+  if (request.method === "GET") {
+    response.writeHead(200, {
+      "Content-Type": "text/html; charset=utf-8",
+      "Cache-Control": "no-store",
+    });
+    response.end(loginPage());
+    return;
+  }
+  if (request.method !== "POST") {
+    sendText(response, 405, "Method not allowed");
+    return;
+  }
+
+  const body = await readBody(request);
+  const form = new URLSearchParams(body);
+  if (form.get("username") === AUTH_USER && form.get("password") === AUTH_PASSWORD) {
+    response.writeHead(302, {
+      Location: "/",
+      "Set-Cookie": `${AUTH_COOKIE}=${encodeURIComponent(authToken())}; Path=/; HttpOnly; SameSite=Lax; Max-Age=2592000`,
+      "Cache-Control": "no-store",
+    });
+    response.end();
+    return;
+  }
+  response.writeHead(401, {
+    "Content-Type": "text/html; charset=utf-8",
+    "Cache-Control": "no-store",
+  });
+  response.end(loginPage("帳號或密碼錯誤"));
 }
 
 function safeStaticPath(urlPath) {
@@ -136,12 +234,17 @@ function handleStatic(request, response, url) {
 
 const server = http.createServer(async (request, response) => {
   try {
-    if (!isAuthorized(request)) {
-      requestAuth(response);
+    const url = new URL(request.url, `http://${request.headers.host}`);
+    if (url.pathname === "/login") {
+      await handleLogin(request, response);
       return;
     }
 
-    const url = new URL(request.url, `http://${request.headers.host}`);
+    if (!isAuthorized(request)) {
+      requestAuth(request, response);
+      return;
+    }
+
     if (url.pathname.startsWith("/api/")) {
       await handleApi(request, response, url);
       return;
