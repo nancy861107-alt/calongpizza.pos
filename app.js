@@ -57,6 +57,8 @@ const cloudSync = {
   syncing: false,
 };
 
+let checkoutAudioContext = null;
+
 let dailyDraggingCard = null;
 let productCategoryDraft = "";
 
@@ -506,6 +508,64 @@ function renderTotals() {
   els.cancelDiscountButton.textContent = state.discountCanceled ? "已取消折扣" : "取消折扣";
 }
 
+function playCheckoutSound() {
+  const AudioContextCtor = window.AudioContext || window.webkitAudioContext;
+  if (!AudioContextCtor) return;
+
+  try {
+    checkoutAudioContext = checkoutAudioContext || new AudioContextCtor();
+    const context = checkoutAudioContext;
+    const play = () => {
+      const now = context.currentTime;
+      const master = context.createGain();
+      master.gain.setValueAtTime(0.0001, now);
+      master.gain.exponentialRampToValueAtTime(0.22, now + 0.02);
+      master.gain.exponentialRampToValueAtTime(0.0001, now + 0.82);
+      master.connect(context.destination);
+
+      const tone = (frequency, start, duration, type, volume) => {
+        const oscillator = context.createOscillator();
+        const gain = context.createGain();
+        oscillator.type = type;
+        oscillator.frequency.setValueAtTime(frequency, now + start);
+        gain.gain.setValueAtTime(volume, now + start);
+        gain.gain.exponentialRampToValueAtTime(0.0001, now + start + duration);
+        oscillator.connect(gain);
+        gain.connect(master);
+        oscillator.start(now + start);
+        oscillator.stop(now + start + duration + 0.02);
+      };
+
+      tone(120, 0, 0.16, "triangle", 0.18);
+      tone(880, 0.12, 0.12, "sine", 0.16);
+      tone(1320, 0.22, 0.11, "sine", 0.14);
+      tone(1760, 0.32, 0.16, "sine", 0.12);
+
+      const noiseBuffer = context.createBuffer(1, Math.floor(context.sampleRate * 0.08), context.sampleRate);
+      const channel = noiseBuffer.getChannelData(0);
+      for (let index = 0; index < channel.length; index += 1) {
+        channel[index] = (Math.random() * 2 - 1) * (1 - index / channel.length);
+      }
+      const noise = context.createBufferSource();
+      const noiseGain = context.createGain();
+      noise.buffer = noiseBuffer;
+      noiseGain.gain.setValueAtTime(0.08, now + 0.04);
+      noiseGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.12);
+      noise.connect(noiseGain);
+      noiseGain.connect(master);
+      noise.start(now + 0.04);
+    };
+
+    if (context.state === "suspended") {
+      context.resume().then(play).catch(() => {});
+      return;
+    }
+    play();
+  } catch (error) {
+    // Sound feedback is optional; checkout should never fail because audio is unavailable.
+  }
+}
+
 function checkout() {
   purgeExpiredSales();
   if (state.cart.length === 0) {
@@ -529,6 +589,7 @@ function checkout() {
 
   state.sales.unshift(sale);
   save("pos-sales", state.sales);
+  playCheckoutSound();
   state.cart = [];
   state.discountCanceled = false;
   els.cashReceivedInput.value = 0;

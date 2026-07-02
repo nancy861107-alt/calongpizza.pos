@@ -1,10 +1,10 @@
-const CACHE_NAME = "pos-system-20260703-category-gap";
+const CACHE_NAME = "pos-system-20260703-checkout-sound";
 const ASSETS = [
   "./",
   "./index.html",
-  "./styles.css?v=20260703-category-gap",
-  "./keypad-helpers.js?v=20260703-category-gap",
-  "./app.js?v=20260703-category-gap",
+  "./styles.css?v=20260703-checkout-sound",
+  "./keypad-helpers.js?v=20260703-checkout-sound",
+  "./app.js?v=20260703-checkout-sound",
   "./manifest.json",
   "./manifest.webmanifest",
   "./app-icon.svg",
