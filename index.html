@@ -16,7 +16,7 @@
     <link rel="apple-touch-icon" sizes="512x512" href="./icon-512.png" />
     <link rel="icon" href="./app-icon.svg" type="image/svg+xml" />
     <link rel="icon" href="./icon-192.png" type="image/png" />
-    <link rel="stylesheet" href="./styles.css?v=20260703-checkout-sound" />
+    <link rel="stylesheet" href="./styles.css?v=20260703-checkout-sound-settings" />
   </head>
   <body data-view="checkout">
     <div class="app-shell">
@@ -292,6 +292,24 @@
               </form>
               <div class="category-sort-list" id="categoriesTable" aria-label="分類排序"></div>
             </section>
+            <section class="table-wrap">
+              <div class="table-heading split-heading">
+                <h3>收銀設定</h3>
+              </div>
+              <form class="settings-form" id="settingsForm">
+                <label>
+                  結帳音效
+                  <select name="checkoutSound" id="checkoutSoundSelect">
+                    <option value="drawer">叮 + 抽屜開</option>
+                    <option value="classic">傳統收銀機</option>
+                    <option value="beep">電子提示音</option>
+                    <option value="soft">柔和完成音</option>
+                    <option value="none">靜音</option>
+                  </select>
+                </label>
+                <button class="ghost-button" type="button" id="previewCheckoutSoundButton">試聽</button>
+              </form>
+            </section>
           </div>
           <form class="product-form" id="productForm">
             <input type="hidden" name="id" />
@@ -317,7 +335,7 @@
       </main>
     </div>
 
-    <script src="./keypad-helpers.js?v=20260703-checkout-sound"></script>
-    <script src="./app.js?v=20260703-checkout-sound"></script>
+    <script src="./keypad-helpers.js?v=20260703-checkout-sound-settings"></script>
+    <script src="./app.js?v=20260703-checkout-sound-settings"></script>
   </body>
 </html>

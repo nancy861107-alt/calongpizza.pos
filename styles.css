@@ -1326,7 +1326,8 @@ th {
 }
 
 .category-form,
-.product-form {
+.product-form,
+.settings-form {
   display: grid;
   gap: 12px;
   align-items: end;
@@ -1334,6 +1335,10 @@ th {
 }
 
 .category-form {
+  grid-template-columns: minmax(220px, 1fr) auto;
+}
+
+.settings-form {
   grid-template-columns: minmax(220px, 1fr) auto;
 }
 
@@ -1469,6 +1474,7 @@ th {
 
   .category-form,
   .product-form,
+  .settings-form,
   .summary-strip {
     grid-template-columns: 1fr;
   }

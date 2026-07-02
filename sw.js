@@ -1,10 +1,10 @@
-const CACHE_NAME = "pos-system-20260703-checkout-sound";
+const CACHE_NAME = "pos-system-20260703-checkout-sound-settings";
 const ASSETS = [
   "./",
   "./index.html",
-  "./styles.css?v=20260703-checkout-sound",
-  "./keypad-helpers.js?v=20260703-checkout-sound",
-  "./app.js?v=20260703-checkout-sound",
+  "./styles.css?v=20260703-checkout-sound-settings",
+  "./keypad-helpers.js?v=20260703-checkout-sound-settings",
+  "./app.js?v=20260703-checkout-sound-settings",
   "./manifest.json",
   "./manifest.webmanifest",
   "./app-icon.svg",

@@ -36,12 +36,16 @@ function monthKeyFrom(value = new Date()) {
 
 const todayKey = () => dateKeyFrom();
 const monthKey = () => monthKeyFrom();
+const defaultSettings = {
+  checkoutSound: "drawer",
+};
 
 const state = {
   products: load("pos-products", defaultProducts),
   categories: load("pos-categories", defaultCategories),
   cart: [],
   sales: load("pos-sales", []),
+  settings: load("pos-settings", defaultSettings),
   payment: "cash",
   reportMode: "day",
   selectedCategory: "all",
@@ -131,6 +135,7 @@ function normalizeProducts() {
 
   save("pos-products", state.products);
   save("pos-categories", state.categories);
+  save("pos-settings", state.settings);
 }
 
 const els = {
@@ -186,6 +191,9 @@ const els = {
   saveCategoryButton: document.querySelector("#saveCategoryButton"),
   cancelCategoryEditButton: document.querySelector("#cancelCategoryEditButton"),
   categoriesTable: document.querySelector("#categoriesTable"),
+  settingsForm: document.querySelector("#settingsForm"),
+  checkoutSoundSelect: document.querySelector("#checkoutSoundSelect"),
+  previewCheckoutSoundButton: document.querySelector("#previewCheckoutSoundButton"),
   productForm: document.querySelector("#productForm"),
   saveProductButton: document.querySelector("#saveProductButton"),
   cancelEditButton: document.querySelector("#cancelEditButton"),
@@ -210,6 +218,7 @@ function syncStateFromStorage() {
   state.products = load("pos-products", defaultProducts);
   state.categories = load("pos-categories", defaultCategories);
   state.sales = load("pos-sales", []);
+  state.settings = { ...defaultSettings, ...load("pos-settings", defaultSettings) };
   normalizeProducts();
   return purgeExpiredSales({ saveCloud: false });
 }
@@ -264,6 +273,7 @@ async function syncFromCloud(options = {}) {
     saveCloudValue("pos-products", state.products);
     saveCloudValue("pos-categories", state.categories);
     saveCloudValue("pos-sales", state.sales);
+    saveCloudValue("pos-settings", state.settings);
   }
 }
 
@@ -496,6 +506,18 @@ function renderCart() {
   renderTotals();
 }
 
+function renderSettings() {
+  els.checkoutSoundSelect.value = state.settings.checkoutSound || defaultSettings.checkoutSound;
+}
+
+function saveSettings() {
+  state.settings = {
+    ...state.settings,
+    checkoutSound: els.checkoutSoundSelect.value || defaultSettings.checkoutSound,
+  };
+  save("pos-settings", state.settings);
+}
+
 function renderTotals() {
   const currentTotals = totals();
   const breakdown = discountBreakdown();
@@ -508,7 +530,8 @@ function renderTotals() {
   els.cancelDiscountButton.textContent = state.discountCanceled ? "已取消折扣" : "取消折扣";
 }
 
-function playCheckoutSound() {
+function playCheckoutSound(soundName = state.settings.checkoutSound) {
+  if (soundName === "none") return;
   const AudioContextCtor = window.AudioContext || window.webkitAudioContext;
   if (!AudioContextCtor) return;
 
@@ -519,15 +542,16 @@ function playCheckoutSound() {
       const now = context.currentTime;
       const master = context.createGain();
       master.gain.setValueAtTime(0.0001, now);
-      master.gain.exponentialRampToValueAtTime(0.22, now + 0.02);
-      master.gain.exponentialRampToValueAtTime(0.0001, now + 0.82);
+      master.gain.exponentialRampToValueAtTime(0.26, now + 0.015);
+      master.gain.exponentialRampToValueAtTime(0.0001, now + 1);
       master.connect(context.destination);
 
-      const tone = (frequency, start, duration, type, volume) => {
+      const tone = (frequency, start, duration, type, volume, endFrequency = frequency) => {
         const oscillator = context.createOscillator();
         const gain = context.createGain();
         oscillator.type = type;
         oscillator.frequency.setValueAtTime(frequency, now + start);
+        oscillator.frequency.exponentialRampToValueAtTime(endFrequency, now + start + duration);
         gain.gain.setValueAtTime(volume, now + start);
         gain.gain.exponentialRampToValueAtTime(0.0001, now + start + duration);
         oscillator.connect(gain);
@@ -536,24 +560,48 @@ function playCheckoutSound() {
         oscillator.stop(now + start + duration + 0.02);
       };
 
-      tone(120, 0, 0.16, "triangle", 0.18);
-      tone(880, 0.12, 0.12, "sine", 0.16);
-      tone(1320, 0.22, 0.11, "sine", 0.14);
-      tone(1760, 0.32, 0.16, "sine", 0.12);
+      const noise = (start, duration, volume) => {
+        const noiseBuffer = context.createBuffer(1, Math.floor(context.sampleRate * duration), context.sampleRate);
+        const channel = noiseBuffer.getChannelData(0);
+        for (let index = 0; index < channel.length; index += 1) {
+          channel[index] = (Math.random() * 2 - 1) * (1 - index / channel.length);
+        }
+        const source = context.createBufferSource();
+        const gain = context.createGain();
+        source.buffer = noiseBuffer;
+        gain.gain.setValueAtTime(volume, now + start);
+        gain.gain.exponentialRampToValueAtTime(0.0001, now + start + duration);
+        source.connect(gain);
+        gain.connect(master);
+        source.start(now + start);
+      };
 
-      const noiseBuffer = context.createBuffer(1, Math.floor(context.sampleRate * 0.08), context.sampleRate);
-      const channel = noiseBuffer.getChannelData(0);
-      for (let index = 0; index < channel.length; index += 1) {
-        channel[index] = (Math.random() * 2 - 1) * (1 - index / channel.length);
+      if (soundName === "classic") {
+        tone(1568, 0, 0.1, "sine", 0.2);
+        tone(1976, 0.1, 0.12, "sine", 0.16);
+        tone(104, 0.22, 0.28, "sawtooth", 0.14, 62);
+        noise(0.2, 0.16, 0.1);
+        return;
       }
-      const noise = context.createBufferSource();
-      const noiseGain = context.createGain();
-      noise.buffer = noiseBuffer;
-      noiseGain.gain.setValueAtTime(0.08, now + 0.04);
-      noiseGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.12);
-      noise.connect(noiseGain);
-      noiseGain.connect(master);
-      noise.start(now + 0.04);
+
+      if (soundName === "beep") {
+        tone(1046, 0, 0.09, "square", 0.11);
+        tone(1318, 0.11, 0.1, "square", 0.1);
+        return;
+      }
+
+      if (soundName === "soft") {
+        tone(659, 0, 0.16, "sine", 0.12);
+        tone(880, 0.13, 0.22, "sine", 0.1);
+        tone(1174, 0.3, 0.26, "triangle", 0.08);
+        return;
+      }
+
+      tone(1760, 0, 0.13, "sine", 0.2);
+      tone(880, 0.015, 0.18, "triangle", 0.08);
+      tone(150, 0.18, 0.42, "sawtooth", 0.12, 72);
+      tone(92, 0.28, 0.32, "triangle", 0.16, 54);
+      noise(0.18, 0.18, 0.11);
     };
 
     if (context.state === "suspended") {
@@ -1601,6 +1649,13 @@ function initEvents() {
     state.discountCanceled = true;
     renderTotals();
   });
+  els.checkoutSoundSelect.addEventListener("change", () => {
+    saveSettings();
+  });
+  els.previewCheckoutSoundButton.addEventListener("click", () => {
+    saveSettings();
+    playCheckoutSound(state.settings.checkoutSound);
+  });
   els.categoryForm.addEventListener("submit", saveCategory);
   els.cancelCategoryEditButton.addEventListener("click", resetCategoryForm);
   els.categoriesTable.addEventListener("click", (event) => {
@@ -1701,6 +1756,7 @@ function renderAll() {
   renderSales();
   renderTransactionDetails();
   renderCategoriesTable();
+  renderSettings();
   renderProductsTable();
 }
 
