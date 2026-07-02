@@ -171,10 +171,7 @@ const els = {
   bookReserveCash: document.querySelector("#bookReserveCash"),
   bookCashTotal: document.querySelector("#bookCashTotal"),
   paymentReportTable: document.querySelector("#paymentReportTable"),
-  detailStartDate: document.querySelector("#detailStartDate"),
-  detailEndDate: document.querySelector("#detailEndDate"),
   detailSearchInput: document.querySelector("#detailSearchInput"),
-  clearDetailFiltersButton: document.querySelector("#clearDetailFiltersButton"),
   detailOrderCount: document.querySelector("#detailOrderCount"),
   detailRevenue: document.querySelector("#detailRevenue"),
   detailDiscountTotal: document.querySelector("#detailDiscountTotal"),
@@ -1049,24 +1046,18 @@ async function exportCurrentReportExcel() {
 }
 
 function filteredTransactionDetails() {
-  const startDate = els.detailStartDate.value;
-  const endDate = els.detailEndDate.value;
   const query = els.detailSearchInput.value.trim().toLowerCase();
 
   return state.sales.filter((sale) => {
     const saleDate = dateKeyFrom(sale.createdAt);
-    const matchesStart = !startDate || saleDate >= startDate;
-    const matchesEnd = !endDate || saleDate <= endDate;
     const searchable = `${paymentLabel(sale.payment)} ${sale.items
       .map((item) => `${item.name} ${item.category}`)
       .join(" ")}`.toLowerCase();
-    return matchesStart && matchesEnd && (!query || searchable.includes(query));
+    return saleDate === todayKey() && (!query || searchable.includes(query));
   });
 }
 
-function resetDetailFiltersToToday() {
-  els.detailStartDate.value = todayKey();
-  els.detailEndDate.value = todayKey();
+function resetDetailSearch() {
   els.detailSearchInput.value = "";
 }
 
@@ -1551,13 +1542,7 @@ function initEvents() {
   document.addEventListener("pointerup", finishDailyDrag);
   document.addEventListener("pointercancel", finishDailyDrag);
   document.addEventListener("mouseup", finishDailyDrag);
-  els.detailStartDate.addEventListener("change", renderTransactionDetails);
-  els.detailEndDate.addEventListener("change", renderTransactionDetails);
   els.detailSearchInput.addEventListener("input", renderTransactionDetails);
-  els.clearDetailFiltersButton.addEventListener("click", () => {
-    resetDetailFiltersToToday();
-    renderTransactionDetails();
-  });
   els.detailsTable.addEventListener("click", (event) => {
     const deleteButton = event.target.closest("[data-delete-sale]");
     if (!deleteButton) return;
@@ -1656,7 +1641,6 @@ function initEvents() {
 }
 
 function renderAll() {
-  if (!els.detailStartDate.value && !els.detailEndDate.value) resetDetailFiltersToToday();
   renderCategories();
   renderProducts();
   renderCart();
@@ -1685,7 +1669,7 @@ function checkDailySalesExpiration() {
   activeBusinessDate = currentDate;
   els.reportDateInput.value = currentDate;
   els.reportMonthInput.value = monthKey();
-  resetDetailFiltersToToday();
+  resetDetailSearch();
   renderSales();
   renderTransactionDetails();
 }

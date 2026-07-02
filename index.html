@@ -11,7 +11,7 @@
     <link rel="manifest" href="./manifest.webmanifest" />
     <link rel="apple-touch-icon" href="./app-icon.svg" />
     <link rel="icon" href="./app-icon.svg" type="image/svg+xml" />
-    <link rel="stylesheet" href="./styles.css?v=20260702-daily-sales-expire" />
+    <link rel="stylesheet" href="./styles.css?v=20260702-today-details-only" />
   </head>
   <body>
     <div class="app-shell">
@@ -217,18 +217,9 @@
         <section class="view" id="detailsView" aria-label="交易明細">
           <div class="detail-toolbar">
             <label>
-              起始日期
-              <input id="detailStartDate" type="date" />
-            </label>
-            <label>
-              結束日期
-              <input id="detailEndDate" type="date" />
-            </label>
-            <label>
               關鍵字
               <input id="detailSearchInput" type="search" placeholder="搜尋品項或付款" />
             </label>
-            <button class="ghost-button" type="button" id="clearDetailFiltersButton">今日明細</button>
           </div>
           <div class="summary-strip details-summary">
             <div>
@@ -308,6 +299,6 @@
       </main>
     </div>
 
-    <script src="./app.js?v=20260702-daily-sales-expire"></script>
+    <script src="./app.js?v=20260702-today-details-only"></script>
   </body>
 </html>
