@@ -649,7 +649,7 @@ select {
   }
 
   body[data-view="checkout"] .topbar {
-    flex: 0 0 auto;
+    display: none;
   }
 
   body[data-view="checkout"] #checkoutView.active {
@@ -683,16 +683,66 @@ select {
   body[data-view="checkout"] .product-grid {
     flex: 1 1 auto;
     min-height: 0;
+    align-content: start;
+    align-items: start;
+    grid-auto-rows: minmax(136px, auto);
     overflow-y: auto;
     overscroll-behavior: contain;
     padding-right: 4px;
   }
 
+  body[data-view="checkout"] .product-card {
+    align-self: start;
+    min-height: 136px;
+  }
+
   body[data-view="checkout"] .cart-list {
     flex: 1 1 auto;
-    min-height: 0;
+    min-height: 190px;
     max-height: none;
     overscroll-behavior: contain;
+  }
+
+  body[data-view="checkout"] .cart-panel {
+    padding: 14px;
+  }
+
+  body[data-view="checkout"] .adjustments {
+    margin: 10px 0 6px;
+  }
+
+  body[data-view="checkout"] .totals {
+    gap: 5px;
+    margin: 6px 0 10px;
+  }
+
+  body[data-view="checkout"] .grand-total {
+    padding-top: 8px;
+  }
+
+  body[data-view="checkout"] .grand-total dd {
+    font-size: 30px;
+  }
+
+  body[data-view="checkout"] .payment-box {
+    gap: 8px;
+  }
+
+  body[data-view="checkout"] .keypad-mode {
+    min-height: 30px;
+    padding: 6px 10px;
+  }
+
+  body[data-view="checkout"] .cash-keypad {
+    gap: 6px;
+  }
+
+  body[data-view="checkout"] .cash-keypad button {
+    min-height: 42px;
+  }
+
+  body[data-view="checkout"] .checkout-button {
+    min-height: 50px;
   }
 }
 

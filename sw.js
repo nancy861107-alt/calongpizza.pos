@@ -1,10 +1,10 @@
-const CACHE_NAME = "pos-system-20260703-cart-quantity-keypad";
+const CACHE_NAME = "pos-system-20260703-checkout-layout-tight";
 const ASSETS = [
   "./",
   "./index.html",
-  "./styles.css?v=20260703-cart-quantity-keypad",
-  "./keypad-helpers.js?v=20260703-cart-quantity-keypad",
-  "./app.js?v=20260703-cart-quantity-keypad",
+  "./styles.css?v=20260703-checkout-layout-tight",
+  "./keypad-helpers.js?v=20260703-checkout-layout-tight",
+  "./app.js?v=20260703-checkout-layout-tight",
   "./manifest.webmanifest",
   "./app-icon.svg",
   "./calong-logo.jpg"
