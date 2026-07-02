@@ -47,7 +47,7 @@ const cloudSync = {
 let dailyDraggingCard = null;
 
 const dailySheetOrderKey = "pos-daily-sheet-order";
-const defaultDailyUtilityOrder = ["other", "inventory", "cash", "payment"];
+const defaultDailyUtilityOrder = ["account", "payment"];
 
 const legacyDemoNames = new Set([
   "美式咖啡",

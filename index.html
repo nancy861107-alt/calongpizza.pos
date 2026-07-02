@@ -11,7 +11,7 @@
     <link rel="manifest" href="./manifest.webmanifest" />
     <link rel="apple-touch-icon" href="./app-icon.svg" />
     <link rel="icon" href="./app-icon.svg" type="image/svg+xml" />
-    <link rel="stylesheet" href="./styles.css?v=20260702-ipad-export-safe" />
+    <link rel="stylesheet" href="./styles.css?v=20260702-account-card" />
   </head>
   <body>
     <div class="app-shell">
@@ -165,32 +165,35 @@
             <div class="daily-product-grid daily-utility-grid" id="dailyProductSections">
               <div class="daily-column daily-category-column" id="dailyCategoryColumn"></div>
               <div class="daily-column daily-utility-column" id="dailyUtilityColumn">
-                <section class="sheet-box daily-utility-card" data-daily-card="cash">
-                  <h4><span class="drag-handle sheet-drag-handle" aria-hidden="true">☰</span><span>現金盤點</span></h4>
-                  <div class="sheet-fields">
-                    <label>機上現金<input data-daily-field="machineCash" type="number" min="0" /></label>
-                    <label>-預備金<input data-daily-field="reserveCash" type="number" min="0" /></label>
+                <section class="sheet-box daily-utility-card account-summary-card" data-daily-card="account">
+                  <h4><span class="drag-handle sheet-drag-handle" aria-hidden="true">☰</span><span>帳務紀錄</span></h4>
+                  <div class="account-summary-section">
+                    <h5>登帳紀錄</h5>
+                    <dl class="sheet-list ledger-list">
+                      <div><dt>銷售總金額</dt><dd id="ledgerGrossSales">$0</dd></div>
+                      <div><dt>-折讓</dt><dd id="ledgerDiscount">$0</dd></div>
+                      <div><dt>=銷貨淨額</dt><dd id="ledgerNetSales">$0</dd></div>
+                    </dl>
                   </div>
-                  <dl class="sheet-list compact-list">
-                    <div><dt>＝存銀金額</dt><dd id="cashDepositTotal">$0</dd></div>
-                    <div><dt>現金盤盈</dt><dd id="cashOver">$0</dd></div>
-                    <div><dt>現金盤筍</dt><dd id="cashShort">$0</dd></div>
-                  </dl>
-                </section>
-                <section class="sheet-box daily-utility-card" data-daily-card="other">
-                  <h4><span class="drag-handle sheet-drag-handle" aria-hidden="true">☰</span><span>登帳紀錄</span></h4>
-                  <dl class="sheet-list ledger-list">
-                    <div><dt>銷售總金額</dt><dd id="ledgerGrossSales">$0</dd></div>
-                    <div><dt>-折讓</dt><dd id="ledgerDiscount">$0</dd></div>
-                    <div><dt>=銷貨淨額</dt><dd id="ledgerNetSales">$0</dd></div>
-                  </dl>
-                </section>
-                <section class="sheet-box daily-utility-card" data-daily-card="inventory">
-                  <h4><span class="drag-handle sheet-drag-handle" aria-hidden="true">☰</span><span>現金紀錄</span></h4>
-                  <dl class="sheet-list ledger-list">
-                    <div><dt>＋預備金</dt><dd id="bookReserveCash">$0</dd></div>
-                    <div><dt>＝登帳現金</dt><dd id="bookCashTotal">$0</dd></div>
-                  </dl>
+                  <div class="account-summary-section">
+                    <h5>現金紀錄</h5>
+                    <dl class="sheet-list ledger-list">
+                      <div><dt>＋預備金</dt><dd id="bookReserveCash">$0</dd></div>
+                      <div><dt>＝登帳現金</dt><dd id="bookCashTotal">$0</dd></div>
+                    </dl>
+                  </div>
+                  <div class="account-summary-section">
+                    <h5>現金盤點</h5>
+                    <div class="sheet-fields">
+                      <label>機上現金<input data-daily-field="machineCash" type="number" min="0" /></label>
+                      <label>-預備金<input data-daily-field="reserveCash" type="number" min="0" /></label>
+                    </div>
+                    <dl class="sheet-list compact-list">
+                      <div><dt>＝存銀金額</dt><dd id="cashDepositTotal">$0</dd></div>
+                      <div><dt>現金盤盈</dt><dd id="cashOver">$0</dd></div>
+                      <div><dt>現金盤筍</dt><dd id="cashShort">$0</dd></div>
+                    </dl>
+                  </div>
                 </section>
                 <section class="sheet-box sheet-table-box daily-utility-card" data-daily-card="payment">
                   <h4><span class="drag-handle sheet-drag-handle" aria-hidden="true">☰</span><span>時段營收</span></h4>
@@ -305,6 +308,6 @@
       </main>
     </div>
 
-    <script src="./app.js?v=20260702-ipad-export-safe"></script>
+    <script src="./app.js?v=20260702-account-card"></script>
   </body>
 </html>

@@ -789,6 +789,30 @@ select {
   border-top: 1px solid var(--line);
 }
 
+.account-summary-section {
+  border-top: 1px solid var(--line);
+}
+
+.account-summary-section:first-of-type {
+  border-top: 0;
+}
+
+.account-summary-section h5 {
+  margin: 0;
+  padding: 12px 16px 0;
+  color: var(--ink);
+  font-size: 14px;
+  font-weight: 900;
+}
+
+.account-summary-section .sheet-list {
+  padding-top: 10px;
+}
+
+.account-summary-section .sheet-fields {
+  padding-top: 10px;
+}
+
 .ledger-list div:last-child {
   margin-top: 4px;
   padding-top: 10px;

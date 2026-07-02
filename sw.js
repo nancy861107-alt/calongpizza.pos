@@ -1,9 +1,9 @@
-const CACHE_NAME = "pos-system-20260702-ipad-export-safe";
+const CACHE_NAME = "pos-system-20260702-account-card";
 const ASSETS = [
   "./",
   "./index.html",
-  "./styles.css?v=20260702-ipad-export-safe",
-  "./app.js?v=20260702-ipad-export-safe",
+  "./styles.css?v=20260702-account-card",
+  "./app.js?v=20260702-account-card",
   "./manifest.webmanifest",
   "./app-icon.svg",
   "./calong-logo.jpg"
