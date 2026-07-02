@@ -958,6 +958,13 @@ select {
   overflow-wrap: anywhere;
 }
 
+.sheet-mini-table .daily-total-row td {
+  background: #f8faf6;
+  border-top: 2px solid var(--line);
+  color: var(--ink);
+  font-weight: 900;
+}
+
 #dailySheet .table-wrap table,
 #salesView .report-grid table,
 .sheet-table-box table {

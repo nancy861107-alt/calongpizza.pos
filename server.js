@@ -118,10 +118,17 @@ function rowsForCategory(categoryName, products, sales) {
 
   const categoryProducts = products.filter((product) => product.category === categoryName);
   if (categoryProducts.length === 0) return [["商品後台尚無品項", "", ""]];
-  return categoryProducts.map((product) => {
+  let totalQuantity = 0;
+  let totalAmount = 0;
+  const rows = categoryProducts.map((product) => {
     const sold = soldMap.get(product.name) || { quantity: 0, amount: 0 };
-    return [product.name, sold.quantity, moneyNumber(sold.amount)];
+    const amount = moneyNumber(sold.amount);
+    totalQuantity += Number(sold.quantity) || 0;
+    totalAmount += amount;
+    return [product.name, sold.quantity, amount];
   });
+  rows.push(["總合", totalQuantity, totalAmount]);
+  return rows;
 }
 
 function hourlyRevenue(sales, hour) {

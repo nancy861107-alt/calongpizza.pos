@@ -635,32 +635,19 @@ function renderDailyProductSections(sales) {
 }
 
 function renderCategorySalesRows(categoryName, tableBody, sales) {
-  const categoryProducts = productsByCategory(categoryName);
-  const soldMap = new Map();
-
-  sales.forEach((sale) => {
-    sale.items.forEach((item) => {
-      if (normalizeCategoryName(item.category) !== categoryName) return;
-      const current = soldMap.get(item.name) || { quantity: 0, amount: 0 };
-      current.quantity += item.quantity;
-      current.amount += item.price * item.quantity;
-      soldMap.set(item.name, current);
-    });
-  });
-
-  tableBody.innerHTML =
-    categoryProducts
-      .map((product) => {
-        const sold = soldMap.get(product.name) || { quantity: 0, amount: 0 };
-        return `
-          <tr>
-            <td>${product.name}</td>
-            <td>${sold.quantity}</td>
-            <td>${money(sold.amount)}</td>
-          </tr>
-        `;
-      })
-      .join("") || `<tr><td colspan="3">商品後台尚無${categoryName}品項</td></tr>`;
+  const rows = dailyCategoryRows(categoryName, sales);
+  tableBody.innerHTML = rows
+    .map((row) => {
+      if (row.empty) return `<tr><td colspan="3">商品後台尚無${categoryName}品項</td></tr>`;
+      return `
+        <tr class="${row.total ? "daily-total-row" : ""}">
+          <td>${row.name}</td>
+          <td>${row.quantity}</td>
+          <td>${money(row.amount)}</td>
+        </tr>
+      `;
+    })
+    .join("");
 }
 
 function escapeXml(value) {
@@ -684,11 +671,18 @@ function dailyCategoryRows(categoryName, sales) {
   });
 
   const products = productsByCategory(categoryName);
-  if (products.length === 0) return [["商品後台尚無品項", "", ""]];
-  return products.map((product) => {
+  if (products.length === 0) return [{ empty: true }];
+
+  let totalQuantity = 0;
+  let totalAmount = 0;
+  const rows = products.map((product) => {
     const sold = soldMap.get(product.name) || { quantity: 0, amount: 0 };
-    return [product.name, sold.quantity, sold.amount];
+    totalQuantity += sold.quantity;
+    totalAmount += sold.amount;
+    return { name: product.name, quantity: sold.quantity, amount: sold.amount };
   });
+  rows.push({ name: "總合", quantity: totalQuantity, amount: totalAmount, total: true });
+  return rows;
 }
 
 async function downloadFile(filename, content, type) {
