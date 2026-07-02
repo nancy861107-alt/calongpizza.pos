@@ -1,6 +1,6 @@
 # 卡隆收銀系統
 
-平板用收銀、交易明細、日報表與商品後台系統。店裡只有 iPad 時，可以把日報表、月報表匯出成 Numbers 可開啟的 `.xlsx`，再存到 iCloud Drive、Google Drive 或 Dropbox，同步回家裡電腦。
+平板用收銀、交易明細、日報表與商品後台系統。店裡只有 iPad 時，可以把日報表、月報表下載成 Numbers 可開啟的 `.csv`，再存到 iCloud Drive、Google Drive 或 Dropbox，同步回家裡電腦。
 
 ## 開啟方式
 
@@ -38,8 +38,8 @@ http://192.168.68.59:8090/?v=discount-count-only
 
 1. iPad 安裝 iCloud Drive、Google Drive 或 Dropbox。
 2. 家裡電腦也登入同一個帳號，開啟同步資料夾。
-3. 收店後在日報表按「匯出到 Drive」，在分享選單選 Google Drive。
-4. 月底切到月報表，再按「匯出到 Drive」儲存月報。
+3. 收店後在日報表按「下載報表」，再把檔案存到 Google Drive。
+4. 月底切到月報表，再按「下載報表」儲存月報。
 
 這個方式只同步報表檔案，不需要家裡電腦一直開著當主機。
 
@@ -94,7 +94,7 @@ POS_USER=calong POS_PASSWORD=1234 npm run start
 - 商品、分類、日報欄位拖曳排序
 - 日報表與月報表匯出
 - 交易明細查詢與單筆刪除
-- 日報表、月報表匯出 Numbers 可開啟的 `.xlsx`
+- 日報表、月報表下載 Numbers 可開啟的 `.csv`
 - iPad 加入主畫面使用
 
 ## 折扣規則

@@ -925,124 +925,19 @@ function xlsxBlob(rows, sheetName = "日結單") {
   });
 }
 
-async function exportDailySheetExcel() {
-  const sales = reportSales();
-  const date = selectedReportDate();
-  const data = loadDailySheet();
-  const netSales = sales.reduce((sum, sale) => sum + sale.totals.total, 0);
-  const grossSales = sales.reduce((sum, sale) => sum + sale.totals.subtotal, 0);
-  const discountTotal = sales.reduce((sum, sale) => sum + (sale.totals.discount || 0), 0);
-  const reserveCash = Number(data.reserveCash || 0);
-  const machineCash = Number(data.machineCash || 0);
-  const cashDeposit = Math.max(0, machineCash - reserveCash);
-  const cashDiff = cashDeposit - netSales;
-
-  const timeRows = [
-    [10, 16],
-    [11, 17],
-    [12, 18],
-    [13, 19],
-    [14, 20],
-    [15, 21],
-  ].map(([leftHour, rightHour]) => [
-    `${leftHour}~${leftHour + 1}`,
-    hourlyRevenue(sales, leftHour),
-    rightHour === 21 ? "21" : `${rightHour}~${rightHour + 1}`,
-    hourlyRevenue(sales, rightHour),
-  ]);
-
-  const rows = [
-    [`日結單 ${date}`],
-    [],
-    ["日報摘要"],
-    ["項目", "數值"],
-    ["今日營收", netSales],
-    ["來客數", sales.length],
-    ["平均客單", sales.length ? Math.round(netSales / sales.length) : 0],
-    ["折扣總金額", discountTotal],
-    [],
-  ];
-
-  categories().forEach((categoryName) => {
-    rows.push([categoryName], ["商品", "數量", "金額"], ...dailyCategoryRows(categoryName, sales), []);
-  });
-
-  rows.push(
-    ["登帳紀錄"],
-    ["項目", "金額"],
-    ["銷售總金額", grossSales],
-    ["-折讓", discountTotal],
-    ["=銷貨淨額", netSales],
-    [],
-    ["現金紀錄"],
-    ["項目", "金額"],
-    ["＋預備金", reserveCash],
-    ["＝登帳現金", netSales + reserveCash],
-    [],
-    ["現金盤點"],
-    ["項目", "金額"],
-    ["機上現金", machineCash],
-    ["-預備金", reserveCash],
-    ["＝存銀金額", cashDeposit],
-    ["現金盤盈", cashDiff > 0 ? cashDiff : 0],
-    ["現金盤筍", cashDiff < 0 ? Math.abs(cashDiff) : 0],
-    [],
-    ["時段營收"],
-    ["時段", "金額", "時段", "金額"],
-    ...timeRows,
-  );
-
-  return downloadFile(`日結單-${date}.xlsx`, xlsxBlob(rows, "日結單"), "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
-}
-
-async function exportMonthlyReportExcel() {
-  const sales = reportSales();
-  const month = els.reportMonthInput.value || monthKey();
-  const netSales = sales.reduce((sum, sale) => sum + sale.totals.total, 0);
-  const grossSales = sales.reduce((sum, sale) => sum + sale.totals.subtotal, 0);
-  const discountTotal = sales.reduce((sum, sale) => sum + (sale.totals.discount || 0), 0);
-  const salesByDate = sales.reduce((grouped, sale) => {
-    const date = dateKeyFrom(sale.createdAt);
-    if (!grouped[date]) grouped[date] = { orders: 0, gross: 0, discount: 0, net: 0 };
-    grouped[date].orders += 1;
-    grouped[date].gross += sale.totals.subtotal;
-    grouped[date].discount += sale.totals.discount || 0;
-    grouped[date].net += sale.totals.total;
-    return grouped;
-  }, {});
-
-  const rows = [
-    [`月報表 ${month}`],
-    [],
-    ["月報摘要"],
-    ["項目", "數值"],
-    ["本月營收", netSales],
-    ["來客數", sales.length],
-    ["平均客單", sales.length ? Math.round(netSales / sales.length) : 0],
-    ["銷售總金額", grossSales],
-    ["折扣總金額", discountTotal],
-    [],
-    ["每日小計"],
-    ["日期", "來客數", "銷售總金額", "折扣", "銷貨淨額"],
-    ...Object.entries(salesByDate)
-      .sort(([leftDate], [rightDate]) => leftDate.localeCompare(rightDate))
-      .map(([date, summary]) => [date, summary.orders, summary.gross, summary.discount, summary.net]),
-    [],
-  ];
-
-  categories().forEach((categoryName) => {
-    rows.push([categoryName], ["商品", "數量", "金額"], ...dailyCategoryRows(categoryName, sales), []);
-  });
-
-  return downloadFile(`月報表-${month}.xlsx`, xlsxBlob(rows, "月報表"), "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
-}
-
 async function exportCurrentReportExcel() {
+  const params = new URLSearchParams({ mode: state.reportMode });
   if (state.reportMode === "month") {
-    await exportMonthlyReportExcel();
-    return;
+    params.set("month", els.reportMonthInput.value || monthKey());
+  } else {
+    params.set("date", selectedReportDate());
   }
-  await exportDailySheetExcel();
+  const link = document.createElement("a");
+  link.href = `/api/export-report?${params.toString()}`;
+  link.target = "_blank";
+  document.body.append(link);
+  link.click();
+  link.remove();
 }
 
 function filteredTransactionDetails() {

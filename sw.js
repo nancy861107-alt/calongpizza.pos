@@ -1,9 +1,9 @@
-const CACHE_NAME = "pos-system-20260702-today-details-only";
+const CACHE_NAME = "pos-system-20260702-server-report-download";
 const ASSETS = [
   "./",
   "./index.html",
-  "./styles.css?v=20260702-today-details-only",
-  "./app.js?v=20260702-today-details-only",
+  "./styles.css?v=20260702-server-report-download",
+  "./app.js?v=20260702-server-report-download",
   "./manifest.webmanifest",
   "./app-icon.svg",
   "./calong-logo.jpg"

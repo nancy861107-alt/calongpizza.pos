@@ -72,6 +72,177 @@ function sendText(response, status, text) {
   response.end(text);
 }
 
+function dateParts(value = new Date()) {
+  const date = value instanceof Date ? value : new Date(value);
+  const parts = new Intl.DateTimeFormat("zh-TW", {
+    timeZone: "Asia/Taipei",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    hourCycle: "h23",
+  }).formatToParts(date);
+  const get = (type) => parts.find((part) => part.type === type)?.value || "";
+  return {
+    date: `${get("year")}-${get("month")}-${get("day")}`,
+    month: `${get("year")}-${get("month")}`,
+    hour: Number(get("hour")),
+  };
+}
+
+function moneyNumber(value) {
+  return Math.max(0, Math.round(Number(value) || 0));
+}
+
+function csvCell(value) {
+  const text = String(value ?? "");
+  return /[",\n]/.test(text) ? `"${text.replace(/"/g, '""')}"` : text;
+}
+
+function csvBuffer(rows) {
+  const csv = rows.map((row) => row.map(csvCell).join(",")).join("\n");
+  return Buffer.from(`\uFEFF${csv}`, "utf8");
+}
+
+function rowsForCategory(categoryName, products, sales) {
+  const soldMap = new Map();
+  sales.forEach((sale) => {
+    (sale.items || []).forEach((item) => {
+      if (item.category !== categoryName) return;
+      const current = soldMap.get(item.name) || { quantity: 0, amount: 0 };
+      current.quantity += Number(item.quantity) || 0;
+      current.amount += (Number(item.price) || 0) * (Number(item.quantity) || 0);
+      soldMap.set(item.name, current);
+    });
+  });
+
+  const categoryProducts = products.filter((product) => product.category === categoryName);
+  if (categoryProducts.length === 0) return [["商品後台尚無品項", "", ""]];
+  return categoryProducts.map((product) => {
+    const sold = soldMap.get(product.name) || { quantity: 0, amount: 0 };
+    return [product.name, sold.quantity, moneyNumber(sold.amount)];
+  });
+}
+
+function hourlyRevenue(sales, hour) {
+  return sales.reduce((sum, sale) => {
+    return dateParts(sale.createdAt).hour === hour ? sum + moneyNumber(sale.totals?.total) : sum;
+  }, 0);
+}
+
+function buildReportRows(url) {
+  const db = readDb();
+  const products = Array.isArray(db["pos-products"]) ? db["pos-products"] : [];
+  const categories = Array.isArray(db["pos-categories"]) ? db["pos-categories"].map((category) => category.name).filter(Boolean) : [];
+  const sales = Array.isArray(db["pos-sales"]) ? db["pos-sales"] : [];
+  const mode = url.searchParams.get("mode") === "month" ? "month" : "day";
+
+  if (mode === "month") {
+    const month = url.searchParams.get("month") || dateParts().month;
+    const monthSales = sales.filter((sale) => dateParts(sale.createdAt).month === month);
+    const netSales = monthSales.reduce((sum, sale) => sum + moneyNumber(sale.totals?.total), 0);
+    const grossSales = monthSales.reduce((sum, sale) => sum + moneyNumber(sale.totals?.subtotal), 0);
+    const discountTotal = monthSales.reduce((sum, sale) => sum + moneyNumber(sale.totals?.discount), 0);
+    const salesByDate = monthSales.reduce((grouped, sale) => {
+      const date = dateParts(sale.createdAt).date;
+      if (!grouped[date]) grouped[date] = { orders: 0, gross: 0, discount: 0, net: 0 };
+      grouped[date].orders += 1;
+      grouped[date].gross += moneyNumber(sale.totals?.subtotal);
+      grouped[date].discount += moneyNumber(sale.totals?.discount);
+      grouped[date].net += moneyNumber(sale.totals?.total);
+      return grouped;
+    }, {});
+
+    const rows = [
+      [`月報表 ${month}`],
+      [],
+      ["月報摘要"],
+      ["項目", "數值"],
+      ["本月營收", netSales],
+      ["來客數", monthSales.length],
+      ["平均客單", monthSales.length ? Math.round(netSales / monthSales.length) : 0],
+      ["銷售總金額", grossSales],
+      ["折扣總金額", discountTotal],
+      [],
+      ["每日小計"],
+      ["日期", "來客數", "銷售總金額", "折扣", "銷貨淨額"],
+      ...Object.entries(salesByDate)
+        .sort(([leftDate], [rightDate]) => leftDate.localeCompare(rightDate))
+        .map(([date, summary]) => [date, summary.orders, summary.gross, summary.discount, summary.net]),
+      [],
+    ];
+    categories.forEach((categoryName) => {
+      rows.push([categoryName], ["商品", "數量", "金額"], ...rowsForCategory(categoryName, products, monthSales), []);
+    });
+    return { filename: `月報表-${month}.csv`, rows };
+  }
+
+  const date = url.searchParams.get("date") || dateParts().date;
+  const daySales = sales.filter((sale) => dateParts(sale.createdAt).date === date);
+  const data = { reserveCash: 3000, ...(db[`pos-daily-sheet-${date}`] || {}) };
+  const netSales = daySales.reduce((sum, sale) => sum + moneyNumber(sale.totals?.total), 0);
+  const grossSales = daySales.reduce((sum, sale) => sum + moneyNumber(sale.totals?.subtotal), 0);
+  const discountTotal = daySales.reduce((sum, sale) => sum + moneyNumber(sale.totals?.discount), 0);
+  const reserveCash = Number(data.reserveCash || 0);
+  const machineCash = Number(data.machineCash || 0);
+  const cashDeposit = Math.max(0, machineCash - reserveCash);
+  const cashDiff = cashDeposit - netSales;
+  const rows = [
+    [`日結單 ${date}`],
+    [],
+    ["日報摘要"],
+    ["項目", "數值"],
+    ["今日營收", netSales],
+    ["來客數", daySales.length],
+    ["平均客單", daySales.length ? Math.round(netSales / daySales.length) : 0],
+    ["折扣總金額", discountTotal],
+    [],
+  ];
+  categories.forEach((categoryName) => {
+    rows.push([categoryName], ["商品", "數量", "金額"], ...rowsForCategory(categoryName, products, daySales), []);
+  });
+  rows.push(
+    ["登帳紀錄"],
+    ["項目", "金額"],
+    ["銷售總金額", grossSales],
+    ["-折讓", discountTotal],
+    ["=銷貨淨額", netSales],
+    [],
+    ["現金紀錄"],
+    ["項目", "金額"],
+    ["＋預備金", reserveCash],
+    ["＝登帳現金", netSales + reserveCash],
+    [],
+    ["現金盤點"],
+    ["項目", "金額"],
+    ["機上現金", machineCash],
+    ["-預備金", reserveCash],
+    ["＝存銀金額", cashDeposit],
+    ["現金盤盈", cashDiff > 0 ? cashDiff : 0],
+    ["現金盤筍", cashDiff < 0 ? Math.abs(cashDiff) : 0],
+    [],
+    ["時段營收"],
+    ["時段", "金額", "時段", "金額"],
+    ["10~11", hourlyRevenue(daySales, 10), "16~17", hourlyRevenue(daySales, 16)],
+    ["11~12", hourlyRevenue(daySales, 11), "17~18", hourlyRevenue(daySales, 17)],
+    ["12~13", hourlyRevenue(daySales, 12), "18~19", hourlyRevenue(daySales, 18)],
+    ["13~14", hourlyRevenue(daySales, 13), "19~20", hourlyRevenue(daySales, 19)],
+    ["14~15", hourlyRevenue(daySales, 14), "20~21", hourlyRevenue(daySales, 20)],
+    ["15~16", hourlyRevenue(daySales, 15), "21", hourlyRevenue(daySales, 21)],
+  );
+  return { filename: `日結單-${date}.csv`, rows };
+}
+
+function sendReportCsv(response, url) {
+  const report = buildReportRows(url);
+  response.writeHead(200, {
+    "Content-Type": "text/csv; charset=utf-8",
+    "Content-Disposition": `attachment; filename*=UTF-8''${encodeURIComponent(report.filename)}`,
+    "Cache-Control": "no-store",
+  });
+  response.end(csvBuffer(report.rows));
+}
+
 function authToken() {
   return Buffer.from(`${AUTH_USER}:${AUTH_PASSWORD}`).toString("base64url");
 }
@@ -195,6 +366,11 @@ function safeStaticPath(urlPath) {
 async function handleApi(request, response, url) {
   if (url.pathname === "/api/health") {
     sendJson(response, 200, { ok: true });
+    return;
+  }
+
+  if (url.pathname === "/api/export-report" && request.method === "GET") {
+    sendReportCsv(response, url);
     return;
   }
 
