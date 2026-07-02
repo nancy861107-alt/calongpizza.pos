@@ -1,9 +1,9 @@
-const CACHE_NAME = "pos-system-20260703-preserve-product-category";
+const CACHE_NAME = "pos-system-20260703-product-category-draft";
 const ASSETS = [
   "./",
   "./index.html",
-  "./styles.css?v=20260703-preserve-product-category",
-  "./app.js?v=20260703-preserve-product-category",
+  "./styles.css?v=20260703-product-category-draft",
+  "./app.js?v=20260703-product-category-draft",
   "./manifest.webmanifest",
   "./app-icon.svg",
   "./calong-logo.jpg"

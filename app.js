@@ -57,6 +57,7 @@ const cloudSync = {
 };
 
 let dailyDraggingCard = null;
+let productCategoryDraft = "";
 
 const dailySheetOrderKey = "pos-daily-sheet-order";
 const defaultDailyUtilityOrder = ["account", "meal", "loss", "payment"];
@@ -305,7 +306,7 @@ function discountBreakdown() {
 
 function renderCategories() {
   const currentCategories = categories();
-  const selectedProductCategory = normalizeCategoryName(els.productCategorySelect.value);
+  const selectedProductCategory = normalizeCategoryName(productCategoryDraft || els.productCategorySelect.value);
   if (!currentCategories.includes(state.selectedCategory)) {
     state.selectedCategory = currentCategories[0] || "";
   }
@@ -333,6 +334,9 @@ function renderCategories() {
   });
   if (currentCategories.includes(selectedProductCategory)) {
     els.productCategorySelect.value = selectedProductCategory;
+    productCategoryDraft = selectedProductCategory;
+  } else if (currentCategories.length > 0) {
+    productCategoryDraft = els.productCategorySelect.value;
   }
 }
 
@@ -1105,6 +1109,7 @@ function resetProductForm() {
   els.productForm.elements.id.value = "";
   if (els.productCategorySelect.options.length > 0) {
     els.productCategorySelect.value = els.productCategorySelect.options[0].value;
+    productCategoryDraft = els.productCategorySelect.value;
   }
   els.saveProductButton.textContent = "新增商品";
   els.cancelEditButton.hidden = true;
@@ -1116,6 +1121,7 @@ function editProduct(productId) {
   els.productForm.elements.id.value = product.id;
   els.productForm.elements.name.value = product.name;
   els.productForm.elements.category.value = product.category;
+  productCategoryDraft = product.category;
   els.productForm.elements.price.value = product.price;
   els.saveProductButton.textContent = "儲存修改";
   els.cancelEditButton.hidden = false;
@@ -1322,9 +1328,10 @@ function saveProduct(event) {
   event.preventDefault();
   const data = new FormData(els.productForm);
   const productId = data.get("id");
+  const selectedCategory = normalizeCategoryName(productCategoryDraft || data.get("category"));
   const productData = {
     name: data.get("name").trim(),
-    category: normalizeCategoryName(data.get("category")),
+    category: selectedCategory,
     price: Number(data.get("price")),
   };
 
@@ -1495,6 +1502,12 @@ function initEvents() {
     reorderCategories(orderedIds);
   });
   els.productForm.addEventListener("submit", saveProduct);
+  els.productCategorySelect.addEventListener("change", () => {
+    productCategoryDraft = normalizeCategoryName(els.productCategorySelect.value);
+  });
+  els.productCategorySelect.addEventListener("input", () => {
+    productCategoryDraft = normalizeCategoryName(els.productCategorySelect.value);
+  });
   els.cancelEditButton.addEventListener("click", resetProductForm);
   els.productsTable.addEventListener("click", (event) => {
     const editButton = event.target.closest("[data-edit-product]");
