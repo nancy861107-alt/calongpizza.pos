@@ -11,7 +11,7 @@
     <link rel="manifest" href="./manifest.webmanifest" />
     <link rel="apple-touch-icon" href="./app-icon.svg" />
     <link rel="icon" href="./app-icon.svg" type="image/svg+xml" />
-    <link rel="stylesheet" href="./styles.css?v=20260702-server-report-download" />
+    <link rel="stylesheet" href="./styles.css?v=20260702-meal-expense-card" />
   </head>
   <body>
     <div class="app-shell">
@@ -195,6 +195,12 @@
                     </dl>
                   </div>
                 </section>
+                <section class="sheet-box daily-utility-card" data-daily-card="meal">
+                  <h4><span class="drag-handle sheet-drag-handle" aria-hidden="true">☰</span><span>伙食費</span></h4>
+                  <div class="sheet-fields">
+                    <label>金額<input data-daily-field="mealExpense" type="number" min="0" /></label>
+                  </div>
+                </section>
                 <section class="sheet-box sheet-table-box daily-utility-card" data-daily-card="payment">
                   <h4><span class="drag-handle sheet-drag-handle" aria-hidden="true">☰</span><span>時段營收</span></h4>
                   <table class="hourly-table">
@@ -299,6 +305,6 @@
       </main>
     </div>
 
-    <script src="./app.js?v=20260702-server-report-download"></script>
+    <script src="./app.js?v=20260702-meal-expense-card"></script>
   </body>
 </html>

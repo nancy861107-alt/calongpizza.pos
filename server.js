@@ -185,6 +185,7 @@ function buildReportRows(url) {
   const discountTotal = daySales.reduce((sum, sale) => sum + moneyNumber(sale.totals?.discount), 0);
   const reserveCash = Number(data.reserveCash || 0);
   const machineCash = Number(data.machineCash || 0);
+  const mealExpense = Number(data.mealExpense || 0);
   const cashDeposit = Math.max(0, machineCash - reserveCash);
   const cashDiff = cashDeposit - netSales;
   const rows = [
@@ -220,6 +221,10 @@ function buildReportRows(url) {
     ["＝存銀金額", cashDeposit],
     ["現金盤盈", cashDiff > 0 ? cashDiff : 0],
     ["現金盤筍", cashDiff < 0 ? Math.abs(cashDiff) : 0],
+    [],
+    ["伙食費"],
+    ["項目", "金額"],
+    ["伙食費", mealExpense],
     [],
     ["時段營收"],
     ["時段", "金額", "時段", "金額"],
