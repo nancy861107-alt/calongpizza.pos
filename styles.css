@@ -676,6 +676,7 @@ select {
 
   body[data-view="checkout"] .category-tabs {
     flex: 0 0 auto;
+    margin-bottom: 22px;
   }
 
   body[data-view="checkout"] .product-grid {
