@@ -45,6 +45,9 @@ const state = {
   payment: "cash",
   reportMode: "day",
   selectedCategory: "all",
+  quantityEditProductId: null,
+  quantityEditValue: "",
+  quantityEditFresh: false,
 };
 
 const cloudSync = {
@@ -144,6 +147,7 @@ const els = {
   cashReceivedInput: document.querySelector("#cashReceivedInput"),
   cashReceivedLabel: document.querySelector("#cashReceivedLabel"),
   cashKeypad: document.querySelector("#cashKeypad"),
+  keypadModeText: document.querySelector("#keypadModeText"),
   changeValue: document.querySelector("#changeValue"),
   checkoutButton: document.querySelector("#checkoutButton"),
   clearCartButton: document.querySelector("#clearCartButton"),
@@ -387,7 +391,65 @@ function updateQuantity(productId, difference) {
   item.quantity += difference;
   if (item.quantity <= 0) {
     state.cart = state.cart.filter((cartItem) => cartItem.id !== productId);
+    if (state.quantityEditProductId === productId) clearQuantityEdit();
+  } else if (state.quantityEditProductId === productId) {
+    state.quantityEditValue = String(item.quantity);
+    state.quantityEditFresh = true;
   }
+  renderCart();
+}
+
+function clearQuantityEdit() {
+  state.quantityEditProductId = null;
+  state.quantityEditValue = "";
+  state.quantityEditFresh = false;
+  updateKeypadMode();
+}
+
+function selectQuantityEdit(productId) {
+  const item = state.cart.find((cartItem) => cartItem.id === productId);
+  if (!item) return;
+  state.quantityEditProductId = productId;
+  state.quantityEditValue = String(item.quantity);
+  state.quantityEditFresh = true;
+  renderCart();
+}
+
+function updateKeypadMode() {
+  const item = state.cart.find((cartItem) => cartItem.id === state.quantityEditProductId);
+  if (!item) {
+    if (state.quantityEditProductId) {
+      state.quantityEditProductId = null;
+      state.quantityEditValue = "";
+      state.quantityEditFresh = false;
+    }
+    els.keypadModeText.textContent = "數字鍵盤：收款金額";
+    els.cashKeypad.setAttribute("aria-label", "現金數字鍵盤");
+    return;
+  }
+  els.keypadModeText.textContent = `數字鍵盤：修改「${item.name}」數量`;
+  els.cashKeypad.setAttribute("aria-label", `修改${item.name}數量`);
+}
+
+function applyQuantityKeypad(key) {
+  const item = state.cart.find((cartItem) => cartItem.id === state.quantityEditProductId);
+  if (!item) {
+    clearQuantityEdit();
+    return;
+  }
+
+  let currentValue = state.quantityEditFresh && /^\d$/.test(String(key)) ? "0" : state.quantityEditValue || String(item.quantity);
+  let nextValue = window.KeypadHelpers.applyKeypadInput(currentValue, key);
+  let nextQuantity = window.KeypadHelpers.quantityFromKeypadValue(nextValue);
+
+  if (nextQuantity <= 0) {
+    nextQuantity = 1;
+    nextValue = "1";
+  }
+
+  item.quantity = nextQuantity;
+  state.quantityEditValue = String(nextQuantity);
+  state.quantityEditFresh = false;
   renderCart();
 }
 
@@ -397,11 +459,13 @@ function renderCart() {
   els.cartCount.textContent = `${count} 件`;
 
   if (state.cart.length === 0) {
+    clearQuantityEdit();
     els.cartList.innerHTML = '<div class="empty-cart">點選品項開始結帳</div>';
   } else {
     state.cart.forEach((item) => {
+      const isEditingQuantity = state.quantityEditProductId === item.id;
       const row = document.createElement("article");
-      row.className = "cart-item";
+      row.className = `cart-item${isEditingQuantity ? " editing-quantity" : ""}`;
       row.innerHTML = `
         <div>
           <strong>${item.name}</strong>
@@ -409,22 +473,25 @@ function renderCart() {
         </div>
         <div class="cart-controls">
           <button class="quantity-button" type="button" title="減少">−</button>
-          <span>${item.quantity}</span>
+          <button class="quantity-value-button" type="button" title="用數字鍵盤修改數量">${item.quantity}</button>
           <button class="quantity-button" type="button" title="增加">+</button>
           <button class="remove-button" type="button" title="移除">×</button>
         </div>
       `;
-      const [minusButton, plusButton, removeButton] = row.querySelectorAll("button");
+      const [minusButton, quantityButton, plusButton, removeButton] = row.querySelectorAll("button");
       minusButton.addEventListener("click", () => updateQuantity(item.id, -1));
+      quantityButton.addEventListener("click", () => selectQuantityEdit(item.id));
       plusButton.addEventListener("click", () => updateQuantity(item.id, 1));
       removeButton.addEventListener("click", () => {
         state.cart = state.cart.filter((cartItem) => cartItem.id !== item.id);
+        if (state.quantityEditProductId === item.id) clearQuantityEdit();
         renderCart();
       });
       els.cartList.append(row);
     });
   }
 
+  updateKeypadMode();
   renderTotals();
 }
 
@@ -1358,6 +1425,7 @@ async function saveProduct(event) {
 function switchView(viewName) {
   const titles = { checkout: "快速結帳", sales: "日報表", details: "交易明細", products: "商品後台" };
   document.body.dataset.view = viewName;
+  if (viewName !== "checkout") clearQuantityEdit();
   els.viewTitle.textContent = viewName === "sales" && state.reportMode === "month" ? "月報表" : titles[viewName];
   els.navButtons.forEach((button) => button.classList.toggle("active", button.dataset.view === viewName));
   els.views.forEach((view) => view.classList.remove("active"));
@@ -1375,11 +1443,16 @@ function initEvents() {
     renderCategories();
     renderProducts();
   });
+  els.cashReceivedInput.addEventListener("focus", clearQuantityEdit);
   els.cashReceivedInput.addEventListener("input", renderTotals);
   els.cashKeypad.addEventListener("click", (event) => {
     const button = event.target.closest("[data-keypad]");
     if (!button) return;
     const key = button.dataset.keypad;
+    if (state.quantityEditProductId) {
+      applyQuantityKeypad(key);
+      return;
+    }
     if (key === "clear") {
       els.cashReceivedInput.value = "0";
     } else if (key === "back") {

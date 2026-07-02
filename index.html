@@ -11,7 +11,7 @@
     <link rel="manifest" href="./manifest.webmanifest" />
     <link rel="apple-touch-icon" href="./app-icon.svg" />
     <link rel="icon" href="./app-icon.svg" type="image/svg+xml" />
-    <link rel="stylesheet" href="./styles.css?v=20260703-fixed-checkout" />
+    <link rel="stylesheet" href="./styles.css?v=20260703-cart-quantity-keypad" />
   </head>
   <body data-view="checkout">
     <div class="app-shell">
@@ -103,6 +103,7 @@
                   收到金額
                   <input id="cashReceivedInput" type="number" min="0" value="0" />
                 </label>
+                <div class="keypad-mode" id="keypadModeText">數字鍵盤：收款金額</div>
                 <div class="cash-keypad" id="cashKeypad" aria-label="現金數字鍵盤">
                   <button type="button" data-keypad="7">7</button>
                   <button type="button" data-keypad="8">8</button>
@@ -311,6 +312,7 @@
       </main>
     </div>
 
-    <script src="./app.js?v=20260703-fixed-checkout"></script>
+    <script src="./keypad-helpers.js?v=20260703-cart-quantity-keypad"></script>
+    <script src="./app.js?v=20260703-cart-quantity-keypad"></script>
   </body>
 </html>

@@ -5,6 +5,7 @@
   "description": "卡隆收銀、交易明細與日報表系統",
   "scripts": {
     "start": "node server.js",
-    "preview": "HOST=127.0.0.1 PORT=4173 node server.js"
+    "preview": "HOST=127.0.0.1 PORT=4173 node server.js",
+    "test": "node tests/keypad-helpers.test.js"
   }
 }
