@@ -2,16 +2,21 @@
 <html lang="zh-Hant">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <meta name="theme-color" content="#15241d" />
+    <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-title" content="卡隆收銀" />
+    <meta name="apple-mobile-web-app-title" content="卡隆POS" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="format-detection" content="telephone=no" />
     <title>卡隆收銀系統</title>
-    <link rel="manifest" href="./manifest.webmanifest" />
-    <link rel="apple-touch-icon" href="./app-icon.svg" />
+    <link rel="manifest" href="./manifest.json" />
+    <link rel="apple-touch-icon" href="./icon-192.png" />
+    <link rel="apple-touch-icon" sizes="192x192" href="./icon-192.png" />
+    <link rel="apple-touch-icon" sizes="512x512" href="./icon-512.png" />
     <link rel="icon" href="./app-icon.svg" type="image/svg+xml" />
-    <link rel="stylesheet" href="./styles.css?v=20260703-remove-keypad-label" />
+    <link rel="icon" href="./icon-192.png" type="image/png" />
+    <link rel="stylesheet" href="./styles.css?v=20260703-pwa-standalone" />
   </head>
   <body data-view="checkout">
     <div class="app-shell">
@@ -311,7 +316,7 @@
       </main>
     </div>
 
-    <script src="./keypad-helpers.js?v=20260703-remove-keypad-label"></script>
-    <script src="./app.js?v=20260703-remove-keypad-label"></script>
+    <script src="./keypad-helpers.js?v=20260703-pwa-standalone"></script>
+    <script src="./app.js?v=20260703-pwa-standalone"></script>
   </body>
 </html>

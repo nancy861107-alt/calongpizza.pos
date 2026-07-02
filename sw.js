@@ -1,12 +1,15 @@
-const CACHE_NAME = "pos-system-20260703-remove-keypad-label";
+const CACHE_NAME = "pos-system-20260703-pwa-standalone";
 const ASSETS = [
   "./",
   "./index.html",
-  "./styles.css?v=20260703-remove-keypad-label",
-  "./keypad-helpers.js?v=20260703-remove-keypad-label",
-  "./app.js?v=20260703-remove-keypad-label",
+  "./styles.css?v=20260703-pwa-standalone",
+  "./keypad-helpers.js?v=20260703-pwa-standalone",
+  "./app.js?v=20260703-pwa-standalone",
+  "./manifest.json",
   "./manifest.webmanifest",
   "./app-icon.svg",
+  "./icon-192.png",
+  "./icon-512.png",
   "./calong-logo.jpg"
 ];
 
