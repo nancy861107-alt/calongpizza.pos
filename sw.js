@@ -1,10 +1,10 @@
-const CACHE_NAME = "pos-system-20260704-cheese-addon";
+const CACHE_NAME = "pos-system-20260704-floating-cheese-addon";
 const ASSETS = [
   "./",
   "./index.html",
-  "./styles.css?v=20260704-cheese-addon",
-  "./keypad-helpers.js?v=20260704-cheese-addon",
-  "./app.js?v=20260704-cheese-addon",
+  "./styles.css?v=20260704-floating-cheese-addon",
+  "./keypad-helpers.js?v=20260704-floating-cheese-addon",
+  "./app.js?v=20260704-floating-cheese-addon",
   "./manifest.json",
   "./manifest.webmanifest",
   "./app-icon.svg",

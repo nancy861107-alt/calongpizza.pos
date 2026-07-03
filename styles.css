@@ -253,6 +253,10 @@ button {
   padding: 16px;
 }
 
+.product-panel {
+  position: relative;
+}
+
 .category-form input,
 .product-form input,
 .adjustments input,
@@ -345,6 +349,38 @@ select {
   color: var(--accent-strong);
   font-size: 22px;
   font-weight: 900;
+}
+
+.floating-addon-button {
+  position: absolute;
+  right: 18px;
+  bottom: 18px;
+  z-index: 2;
+  min-height: 52px;
+  padding: 0 18px;
+  border-color: #f4c87a;
+  background: #fff7e8;
+  color: #9a5200;
+  box-shadow: 0 10px 28px rgba(154, 82, 0, 0.16);
+  font-size: 16px;
+  font-weight: 950;
+  white-space: nowrap;
+}
+
+.floating-addon-button:hover {
+  border-color: #d97706;
+  background: #f4b84b;
+  color: #15241d;
+}
+
+@media (max-width: 720px) {
+  .floating-addon-button {
+    right: 12px;
+    bottom: 12px;
+    min-height: 46px;
+    padding: 0 14px;
+    font-size: 14px;
+  }
 }
 
 .cart-panel {
@@ -452,7 +488,7 @@ select {
 
 .adjustments {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto auto;
+  grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
   gap: 10px;
   margin: 16px 0 8px;
@@ -469,24 +505,13 @@ select {
   font-weight: 900;
 }
 
-.cancel-discount-button,
-.add-cheese-button {
+.cancel-discount-button {
   white-space: nowrap;
 }
 
 .cancel-discount-button:disabled {
   opacity: 0.58;
   cursor: default;
-}
-
-@media (max-width: 1180px) {
-  .adjustments {
-    grid-template-columns: minmax(0, 1fr) auto;
-  }
-
-  .add-cheese-button {
-    grid-column: 1 / 2;
-  }
 }
 
 .adjustments label,
@@ -698,7 +723,7 @@ select {
     grid-auto-rows: minmax(136px, auto);
     overflow-y: auto;
     overscroll-behavior: contain;
-    padding-right: 4px;
+    padding: 0 4px 78px 0;
   }
 
   body[data-view="checkout"] .product-card {

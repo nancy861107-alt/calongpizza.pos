@@ -16,7 +16,7 @@
     <link rel="apple-touch-icon" sizes="512x512" href="./icon-512.png" />
     <link rel="icon" href="./app-icon.svg" type="image/svg+xml" />
     <link rel="icon" href="./icon-192.png" type="image/png" />
-    <link rel="stylesheet" href="./styles.css?v=20260704-cheese-addon" />
+    <link rel="stylesheet" href="./styles.css?v=20260704-floating-cheese-addon" />
   </head>
   <body data-view="checkout">
     <div class="app-shell">
@@ -67,6 +67,7 @@
             <section class="product-panel">
               <div class="category-tabs" id="categoryTabs" role="tablist" aria-label="品項分類"></div>
               <div class="product-grid" id="productGrid"></div>
+              <button class="ghost-button add-cheese-button floating-addon-button" type="button" id="addCheeseButton">起士加倍20元</button>
             </section>
 
             <section class="cart-panel" aria-label="購物車">
@@ -85,7 +86,6 @@
 
               <div class="adjustments">
                 <strong class="auto-discount-note" id="discountRuleText">主餐 0、炸物 0、飲料 0，目前符合 0 組</strong>
-                <button class="ghost-button small add-cheese-button" type="button" id="addCheeseButton">起士加倍20元</button>
                 <button class="ghost-button small cancel-discount-button" type="button" id="cancelDiscountButton">取消折扣</button>
               </div>
 
@@ -336,7 +336,7 @@
       </main>
     </div>
 
-    <script src="./keypad-helpers.js?v=20260704-cheese-addon"></script>
-    <script src="./app.js?v=20260704-cheese-addon"></script>
+    <script src="./keypad-helpers.js?v=20260704-floating-cheese-addon"></script>
+    <script src="./app.js?v=20260704-floating-cheese-addon"></script>
   </body>
 </html>
