@@ -1,10 +1,10 @@
-const CACHE_NAME = "pos-system-20260703-bigger-category-tabs";
+const CACHE_NAME = "pos-system-20260704-cheese-addon";
 const ASSETS = [
   "./",
   "./index.html",
-  "./styles.css?v=20260703-bigger-category-tabs",
-  "./keypad-helpers.js?v=20260703-bigger-category-tabs",
-  "./app.js?v=20260703-bigger-category-tabs",
+  "./styles.css?v=20260704-cheese-addon",
+  "./keypad-helpers.js?v=20260704-cheese-addon",
+  "./app.js?v=20260704-cheese-addon",
   "./manifest.json",
   "./manifest.webmanifest",
   "./app-icon.svg",

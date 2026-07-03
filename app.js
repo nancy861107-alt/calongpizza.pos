@@ -13,6 +13,13 @@ function makeId() {
 }
 
 const defaultProducts = [];
+const cheeseAddonProduct = {
+  id: "addon-cheese-double",
+  name: "起士加倍",
+  category: "加購",
+  price: 20,
+  color: "#d97706",
+};
 
 const defaultCategories = mainCategoryNames.map((name) => ({ id: makeId(), name }));
 
@@ -149,6 +156,7 @@ const els = {
   cartList: document.querySelector("#cartList"),
   cartCount: document.querySelector("#cartCount"),
   discountRuleText: document.querySelector("#discountRuleText"),
+  addCheeseButton: document.querySelector("#addCheeseButton"),
   cancelDiscountButton: document.querySelector("#cancelDiscountButton"),
   subtotalValue: document.querySelector("#subtotalValue"),
   discountValue: document.querySelector("#discountValue"),
@@ -394,6 +402,16 @@ function addToCart(productId) {
     existing.quantity += 1;
   } else {
     state.cart.push({ ...product, quantity: 1 });
+  }
+  renderCart();
+}
+
+function addCheeseAddon() {
+  const existing = state.cart.find((item) => item.id === cheeseAddonProduct.id);
+  if (existing) {
+    existing.quantity += 1;
+  } else {
+    state.cart.push({ ...cheeseAddonProduct, quantity: 1 });
   }
   renderCart();
 }
@@ -1655,6 +1673,7 @@ function initEvents() {
     state.discountCanceled = true;
     renderTotals();
   });
+  els.addCheeseButton.addEventListener("click", addCheeseAddon);
   els.checkoutSoundSelect.addEventListener("change", () => {
     saveSettings();
   });

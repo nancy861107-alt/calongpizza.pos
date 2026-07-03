@@ -452,7 +452,7 @@ select {
 
 .adjustments {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-columns: minmax(0, 1fr) auto auto;
   align-items: center;
   gap: 10px;
   margin: 16px 0 8px;
@@ -469,13 +469,24 @@ select {
   font-weight: 900;
 }
 
-.cancel-discount-button {
+.cancel-discount-button,
+.add-cheese-button {
   white-space: nowrap;
 }
 
 .cancel-discount-button:disabled {
   opacity: 0.58;
   cursor: default;
+}
+
+@media (max-width: 1180px) {
+  .adjustments {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .add-cheese-button {
+    grid-column: 1 / 2;
+  }
 }
 
 .adjustments label,
