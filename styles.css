@@ -673,6 +673,12 @@ select {
     margin-bottom: 22px;
   }
 
+  body[data-view="checkout"] .category-tab {
+    min-height: 52px;
+    padding: 0 18px;
+    font-size: 16px;
+  }
+
   body[data-view="checkout"] .product-grid {
     flex: 1 1 auto;
     min-height: 0;

@@ -1,10 +1,10 @@
-const CACHE_NAME = "pos-system-20260703-custom-cash-register-sound";
+const CACHE_NAME = "pos-system-20260703-bigger-category-tabs";
 const ASSETS = [
   "./",
   "./index.html",
-  "./styles.css?v=20260703-custom-cash-register-sound",
-  "./keypad-helpers.js?v=20260703-custom-cash-register-sound",
-  "./app.js?v=20260703-custom-cash-register-sound",
+  "./styles.css?v=20260703-bigger-category-tabs",
+  "./keypad-helpers.js?v=20260703-bigger-category-tabs",
+  "./app.js?v=20260703-bigger-category-tabs",
   "./manifest.json",
   "./manifest.webmanifest",
   "./app-icon.svg",
