@@ -1,0 +1,14 @@
+{
+  "appId": "com.calongpizza.pos",
+  "appName": "卡隆POS",
+  "webDir": ".",
+  "server": {
+    "url": "https://calong-pos-system.onrender.com",
+    "cleartext": false
+  },
+  "ios": {
+    "contentInset": "never",
+    "limitsNavigationsToAppBoundDomains": false,
+    "scheme": "CalongPOS"
+  }
+}

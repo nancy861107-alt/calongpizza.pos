@@ -21,6 +21,7 @@ const MIME_TYPES = {
   ".jpg": "image/jpeg",
   ".jpeg": "image/jpeg",
   ".png": "image/png",
+  ".mp3": "audio/mpeg",
 };
 
 function ensureDb() {

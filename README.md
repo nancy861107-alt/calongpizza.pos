@@ -77,6 +77,18 @@ POS_PASSWORD=自己設定一組安全密碼
 
 正式外網使用時，一定要設定 `POS_USER` 和 `POS_PASSWORD`，否則任何知道網址的人都能打開系統。
 
+## 做成 iPad App
+
+這個專案已加入 Capacitor 設定，可以包成沒有 Safari 工具列的 iPad App。
+
+操作請看：
+
+```text
+IPAD_APP.md
+```
+
+目前 App 會開啟 Render 雲端網址，資料仍然和雲端 POS 共用。
+
 ### 本機測試帳號密碼
 
 ```bash
