@@ -31,10 +31,53 @@ Mac 需要先安裝 Xcode，然後在專案資料夾執行：
 ```bash
 npm install
 npm run ios:add
+npm run ios:sync
 npm run ios:open
 ```
 
 `npm run ios:open` 會開啟 Xcode。
+
+如果 `ios:add` 已經跑過，之後不用重複跑；只要執行：
+
+```bash
+npm run ios:sync
+npm run ios:open
+```
+
+## CocoaPods 錯誤
+
+如果看到：
+
+```text
+CocoaPods is not installed
+```
+
+先安裝：
+
+```bash
+brew install cocoapods
+```
+
+如果看到：
+
+```text
+Unable to add a source with url https://cdn.cocoapods.org/ named trunk
+```
+
+代表 CocoaPods 第一次下載索引失敗，通常是網路或 CocoaPods 初始化問題。請執行：
+
+```bash
+pod repo add trunk https://cdn.cocoapods.org/
+npm run ios:pods
+npm run ios:open
+```
+
+如果 `pod repo add` 顯示已存在，可以直接跑：
+
+```bash
+npm run ios:pods
+npm run ios:open
+```
 
 ## 安裝到 iPad 測試
 

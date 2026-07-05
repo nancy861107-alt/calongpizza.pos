@@ -9,6 +9,7 @@
     "test": "node tests/keypad-helpers.test.js",
     "ios:add": "npx cap add ios",
     "ios:sync": "npx cap sync ios",
+    "ios:pods": "cd ios/App && pod install --repo-update",
     "ios:open": "npx cap open ios"
   },
   "dependencies": {

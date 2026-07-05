@@ -1,7 +1,7 @@
 {
   "appId": "com.calongpizza.pos",
   "appName": "卡隆POS",
-  "webDir": ".",
+  "webDir": "capacitor-www",
   "server": {
     "url": "https://calong-pos-system.onrender.com",
     "cleartext": false
