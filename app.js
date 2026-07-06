@@ -1179,6 +1179,14 @@ function xlsxBlob(rows, sheetName = "日結單") {
   });
 }
 
+function filenameFromContentDisposition(header, fallback) {
+  if (!header) return fallback;
+  const utf8Match = header.match(/filename\*=UTF-8''([^;]+)/i);
+  if (utf8Match) return decodeURIComponent(utf8Match[1]);
+  const plainMatch = header.match(/filename="?([^";]+)"?/i);
+  return plainMatch ? plainMatch[1] : fallback;
+}
+
 function blankExportRow() {
   return Array.from({ length: 9 }, () => "");
 }
@@ -1321,12 +1329,18 @@ async function exportCurrentReportExcel() {
     return;
   }
 
-  const link = document.createElement("a");
-  link.href = `/api/export-report?${params.toString()}`;
-  link.target = "_blank";
-  document.body.append(link);
-  link.click();
-  link.remove();
+  const response = await fetch(`/api/export-report?${params.toString()}`, { cache: "no-store" });
+  if (response.status === 401) {
+    window.location.href = "/login";
+    return;
+  }
+  if (!response.ok) throw new Error("報表產生失敗");
+  const blob = await response.blob();
+  const fallbackFilename = state.reportMode === "month"
+    ? `月報表-${els.reportMonthInput.value || monthKey()}.xlsx`
+    : `日結單-${selectedReportDate()}.xlsx`;
+  const filename = filenameFromContentDisposition(response.headers.get("Content-Disposition"), fallbackFilename);
+  await downloadFile(filename, blob, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
 }
 
 function filteredTransactionDetails() {
