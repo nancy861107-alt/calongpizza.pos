@@ -1424,14 +1424,21 @@ function editCategory(categoryId) {
 function deleteCategory(categoryId) {
   const category = state.categories.find((item) => item.id === categoryId);
   if (!category) return;
-  const usedCount = state.products.filter((product) => product.category === category.name).length;
-  if (usedCount > 0) {
-    alert("這個分類底下還有品項，請先修改或刪除那些品項。");
-    return;
-  }
-  if (!confirm(`確定刪除「${category.name}」分類？`)) return;
+  const categoryProducts = state.products.filter((product) => product.category === category.name);
+  const confirmMessage =
+    categoryProducts.length > 0
+      ? `「${category.name}」分類底下有 ${categoryProducts.length} 個品項。\n確定要連同這些品項一起刪除嗎？已完成的銷售紀錄會保留。`
+      : `確定刪除「${category.name}」分類？`;
+  if (!confirm(confirmMessage)) return;
+  const deletedProductIds = new Set(categoryProducts.map((product) => product.id));
   state.categories = state.categories.filter((item) => item.id !== categoryId);
+  state.products = state.products.filter((product) => product.category !== category.name);
+  state.cart = state.cart.filter((item) => !deletedProductIds.has(item.id));
+  if (state.selectedCategory === category.name) {
+    state.selectedCategory = categories()[0] || "";
+  }
   save("pos-categories", state.categories);
+  save("pos-products", state.products);
   resetCategoryForm();
   renderAll();
 }
