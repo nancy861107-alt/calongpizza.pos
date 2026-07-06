@@ -119,12 +119,6 @@ function normalizeProducts() {
       categoryNames.add(product.category);
     }
   });
-  mainCategoryNames.forEach((name) => {
-    if (!categoryNames.has(name)) {
-      state.categories.push({ id: makeId(), name });
-      categoryNames.add(name);
-    }
-  });
   state.categories.sort((a, b) => {
     const aIndex = mainCategoryNames.indexOf(a.name);
     const bIndex = mainCategoryNames.indexOf(b.name);
