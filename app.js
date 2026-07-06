@@ -70,6 +70,8 @@ const cloudSync = {
 
 let checkoutAudioContext = null;
 
+let adminDraggingCard = null;
+let adminDraggingType = "";
 let dailyDraggingCard = null;
 let productCategoryDraft = "";
 
@@ -1624,6 +1626,63 @@ function sortableAfterElement(container, y) {
   ).element;
 }
 
+function beginAdminDrag(card, type, pointerId) {
+  adminDraggingCard = card;
+  adminDraggingType = type;
+  card.classList.add("dragging");
+  if (pointerId !== undefined) card.setPointerCapture?.(pointerId);
+}
+
+function moveAdminDrag(x, y) {
+  if (!adminDraggingCard) return;
+  if (adminDraggingType === "category") {
+    els.categoriesTable.classList.add("drag-over");
+    const afterElement = sortableAfterElement(els.categoriesTable, y);
+    if (afterElement == null) {
+      els.categoriesTable.append(adminDraggingCard);
+    } else {
+      els.categoriesTable.insertBefore(adminDraggingCard, afterElement);
+    }
+    return;
+  }
+
+  const target = document.elementFromPoint(x, y);
+  const list = target?.closest?.(".sortable-products");
+  if (!list) return;
+  const draggingProduct = state.products.find((product) => product.id === adminDraggingCard.dataset.productId);
+  if (!draggingProduct || draggingProduct.category !== list.dataset.sortableCategory) return;
+  document.querySelectorAll(".sortable-products.drag-over").forEach((item) => item.classList.remove("drag-over"));
+  list.classList.add("drag-over");
+  const afterElement = sortableAfterElement(list, y);
+  if (afterElement == null) {
+    list.append(adminDraggingCard);
+  } else {
+    list.insertBefore(adminDraggingCard, afterElement);
+  }
+}
+
+function finishAdminDrag() {
+  if (!adminDraggingCard) return;
+  const card = adminDraggingCard;
+  const type = adminDraggingType;
+  card.classList.remove("dragging");
+  adminDraggingCard = null;
+  adminDraggingType = "";
+  els.categoriesTable.classList.remove("drag-over");
+  document.querySelectorAll(".sortable-products.drag-over").forEach((item) => item.classList.remove("drag-over"));
+
+  if (type === "category") {
+    const orderedIds = [...els.categoriesTable.querySelectorAll(".admin-category-card")].map((item) => item.dataset.categoryId);
+    reorderCategories(orderedIds);
+    return;
+  }
+
+  const list = card.closest(".sortable-products");
+  if (!list) return;
+  const orderedIds = [...list.querySelectorAll(".admin-product-card")].map((item) => item.dataset.productId);
+  reorderProducts(list.dataset.sortableCategory, orderedIds);
+}
+
 function sortableAfterDailyCard(container, x, y) {
   const cards = [...container.querySelectorAll(".daily-category-card:not(.dragging), .daily-utility-card:not(.dragging)")];
   for (const card of cards) {
@@ -1922,6 +1981,13 @@ function initEvents() {
     if (editButton) editCategory(editButton.dataset.editCategory);
     if (deleteButton) deleteCategory(deleteButton.dataset.deleteCategory);
   });
+  els.categoriesTable.addEventListener("pointerdown", (event) => {
+    const handle = event.target.closest(".drag-handle");
+    const card = event.target.closest(".admin-category-card");
+    if (!handle || !card) return;
+    event.preventDefault();
+    beginAdminDrag(card, "category", event.pointerId);
+  });
   els.categoriesTable.addEventListener("dragstart", (event) => {
     const card = event.target.closest(".admin-category-card");
     if (!card) return;
@@ -1952,6 +2018,13 @@ function initEvents() {
     const orderedIds = [...els.categoriesTable.querySelectorAll(".admin-category-card")].map((card) => card.dataset.categoryId);
     reorderCategories(orderedIds);
   });
+  els.categoriesTable.addEventListener("pointermove", (event) => {
+    if (!adminDraggingCard || adminDraggingType !== "category") return;
+    event.preventDefault();
+    moveAdminDrag(event.clientX, event.clientY);
+  });
+  els.categoriesTable.addEventListener("pointerup", finishAdminDrag);
+  els.categoriesTable.addEventListener("pointercancel", finishAdminDrag);
   els.productForm.addEventListener("submit", saveProduct);
   els.productCategorySelect.addEventListener("change", () => {
     productCategoryDraft = normalizeCategoryName(els.productCategorySelect.value);
@@ -1965,6 +2038,13 @@ function initEvents() {
     const deleteButton = event.target.closest("[data-delete-product]");
     if (editButton) editProduct(editButton.dataset.editProduct);
     if (deleteButton) deleteProduct(deleteButton.dataset.deleteProduct);
+  });
+  els.productsTable.addEventListener("pointerdown", (event) => {
+    const handle = event.target.closest(".drag-handle");
+    const card = event.target.closest(".admin-product-card");
+    if (!handle || !card) return;
+    event.preventDefault();
+    beginAdminDrag(card, "product", event.pointerId);
   });
   els.productsTable.addEventListener("dragstart", (event) => {
     const card = event.target.closest(".admin-product-card");
@@ -2005,6 +2085,13 @@ function initEvents() {
     const orderedIds = [...list.querySelectorAll(".admin-product-card")].map((card) => card.dataset.productId);
     reorderProducts(list.dataset.sortableCategory, orderedIds);
   });
+  document.addEventListener("pointermove", (event) => {
+    if (!adminDraggingCard || adminDraggingType !== "product") return;
+    event.preventDefault();
+    moveAdminDrag(event.clientX, event.clientY);
+  });
+  document.addEventListener("pointerup", finishAdminDrag);
+  document.addEventListener("pointercancel", finishAdminDrag);
 }
 
 function renderAll() {

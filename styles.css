@@ -1470,6 +1470,8 @@ th {
   color: var(--muted);
   cursor: grab;
   font-weight: 900;
+  touch-action: none;
+  user-select: none;
 }
 
 .sheet-drag-handle {
