@@ -74,7 +74,7 @@ let dailyDraggingCard = null;
 let productCategoryDraft = "";
 
 const dailySheetOrderKey = "pos-daily-sheet-order";
-const defaultDailyUtilityOrder = ["account", "meal", "loss", "payment"];
+const defaultDailyUtilityOrder = ["account", "meal", "loss", "payment", "inventory", "delivery"];
 
 const legacyDemoNames = new Set([
   "美式咖啡",
@@ -190,6 +190,9 @@ const els = {
   bookReserveCash: document.querySelector("#bookReserveCash"),
   bookCashTotal: document.querySelector("#bookCashTotal"),
   paymentReportTable: document.querySelector("#paymentReportTable"),
+  deliveryRows: document.querySelector("#deliveryRows"),
+  deliveryTotal: document.querySelector("#deliveryTotal"),
+  addDeliveryRowButton: document.querySelector("#addDeliveryRowButton"),
   detailSearchInput: document.querySelector("#detailSearchInput"),
   detailOrderCount: document.querySelector("#detailOrderCount"),
   detailRevenue: document.querySelector("#detailRevenue"),
@@ -702,6 +705,58 @@ function saveDailySheetValue(field, value) {
   save(dailyReportKey(), data);
 }
 
+function escapeHtml(value) {
+  return String(value ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
+function deliveryRowsFromData(data = loadDailySheet()) {
+  return Array.isArray(data.deliveryRows) ? data.deliveryRows : [];
+}
+
+function collectDeliveryRowsFromDom() {
+  return [...els.deliveryRows.querySelectorAll("tr")].map((row) => ({
+    unit: row.querySelector("[data-delivery-field='unit']")?.value || "",
+    amount: row.querySelector("[data-delivery-field='amount']")?.value || "",
+  }));
+}
+
+function saveDeliveryRows(rows) {
+  const data = loadDailySheet();
+  data.deliveryRows = rows.filter((row) => row.unit.trim() || row.amount !== "");
+  save(dailyReportKey(), data);
+}
+
+function deliveryTotal(rows) {
+  return rows.reduce((sum, row) => sum + Number(row.amount || 0), 0);
+}
+
+function renderDeliveryRows(data = loadDailySheet()) {
+  const savedRows = deliveryRowsFromData(data);
+  const rows = savedRows.length ? savedRows : [{ unit: "", amount: "" }];
+  els.deliveryRows.innerHTML = rows
+    .map(
+      (row, index) => `
+        <tr data-delivery-index="${index}">
+          <td><input data-delivery-field="unit" value="${escapeHtml(row.unit)}" /></td>
+          <td><input data-delivery-field="amount" type="number" min="0" inputmode="numeric" value="${escapeHtml(row.amount)}" /></td>
+          <td><button class="ghost-button small delivery-delete-button" type="button" data-delivery-delete="${index}" title="刪除">×</button></td>
+        </tr>
+      `,
+    )
+    .join("");
+  els.deliveryTotal.textContent = money(deliveryTotal(savedRows));
+}
+
+function updateDeliveryRowsFromInput() {
+  const rows = collectDeliveryRowsFromDom();
+  saveDeliveryRows(rows);
+  els.deliveryTotal.textContent = money(deliveryTotal(rows));
+}
+
 function summarizeItems(sales) {
   const itemMap = new Map();
   sales.forEach((sale) => {
@@ -800,6 +855,7 @@ function renderDailySheet(sales) {
     input.value = Object.prototype.hasOwnProperty.call(data, input.dataset.dailyField) ? data[input.dataset.dailyField] : "";
   });
 
+  renderDeliveryRows(data);
   renderDailyProductSections(sales);
   applyDailySheetOrder();
 }
@@ -1072,17 +1128,23 @@ function sheetXml(rows) {
   const rowXml = rows
     .map((row, rowIndex) => {
       const cells = row.map((cell, columnIndex) => sheetCell(cell, rowIndex + 1, columnIndex + 1)).join("");
-      return `<row r="${rowIndex + 1}">${cells}</row>`;
+      const height = rowIndex === 0 ? 24 : 21;
+      return `<row r="${rowIndex + 1}" ht="${height}" customHeight="1">${cells}</row>`;
     })
     .join("");
 
   return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">
   <cols>
-    <col min="1" max="1" width="24" customWidth="1"/>
-    <col min="2" max="2" width="14" customWidth="1"/>
-    <col min="3" max="3" width="14" customWidth="1"/>
-    <col min="4" max="4" width="20" customWidth="1"/>
+    <col min="1" max="1" width="6" customWidth="1"/>
+    <col min="2" max="2" width="18" customWidth="1"/>
+    <col min="3" max="3" width="9" customWidth="1"/>
+    <col min="4" max="4" width="12" customWidth="1"/>
+    <col min="5" max="5" width="3" customWidth="1"/>
+    <col min="6" max="6" width="13" customWidth="1"/>
+    <col min="7" max="7" width="12" customWidth="1"/>
+    <col min="8" max="8" width="12" customWidth="1"/>
+    <col min="9" max="9" width="12" customWidth="1"/>
   </cols>
   <sheetData>${rowXml}</sheetData>
 </worksheet>`;
@@ -1111,7 +1173,7 @@ function xlsxBlob(rows, sheetName = "日結單") {
       name: "xl/workbook.xml",
       content: `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">
-  <sheets><sheet name="${xmlEscape(sheetName)}" sheetId="1" r:id="rId1"/></sheets>
+  <sheets><sheet name="${escapeXml(sheetName)}" sheetId="1" r:id="rId1"/></sheets>
 </workbook>`,
     },
     {
@@ -1129,6 +1191,135 @@ function xlsxBlob(rows, sheetName = "日結單") {
   });
 }
 
+function blankExportRow() {
+  return Array.from({ length: 9 }, () => "");
+}
+
+function exportRow(left = [], right = []) {
+  const row = blankExportRow();
+  left.forEach((value, index) => {
+    row[index] = value;
+  });
+  right.forEach((value, index) => {
+    row[index + 5] = value;
+  });
+  return row;
+}
+
+function clientCategoryExportRows(categoryName, sales) {
+  return dailyCategoryRows(categoryName, sales).map((row) => {
+    if (row.empty) return ["商品後台尚無品項", "", ""];
+    return [row.name, row.quantity, row.amount];
+  });
+}
+
+function clientDailyInventoryRows(data) {
+  return [
+    ["", "面皮", "鋁盒"],
+    ["前日庫存", data.doughPreviousStock || "", data.boxPreviousStock || ""],
+    ["進貨", data.doughPurchase || "", data.boxPurchase || ""],
+    ["當日庫存", data.doughCurrentStock || "", data.boxCurrentStock || ""],
+    ["消耗用量", data.doughUsed || "", data.boxUsed || ""],
+    ["銷售用量", data.doughSold || "", data.boxSold || ""],
+  ];
+}
+
+function clientDeliveryExportRows(data) {
+  const rows = deliveryRowsFromData(data);
+  const visibleRows = rows.length ? rows : [{ unit: "", amount: "" }];
+  return [["單位", "金額"], ...visibleRows.map((row) => [row.unit || "", Number(row.amount || 0) || ""]), ["總和", deliveryTotal(rows)]];
+}
+
+function buildClientDailyExportRows() {
+  const date = selectedReportDate();
+  const sales = reportSales();
+  const data = loadDailySheet();
+  const netSales = sales.reduce((sum, sale) => sum + sale.totals.total, 0);
+  const grossSales = sales.reduce((sum, sale) => sum + sale.totals.subtotal, 0);
+  const discountTotal = sales.reduce((sum, sale) => sum + (sale.totals.discount || 0), 0);
+  const reserveCash = Number(data.reserveCash || 0);
+  const machineCash = Number(data.machineCash || 0);
+  const cashDeposit = Math.max(0, machineCash - reserveCash);
+  const cashDiff = cashDeposit - netSales;
+
+  const leftRows = [exportRow(["", "產品", "數量", "金額"])];
+  categories().forEach((categoryName) => {
+    clientCategoryExportRows(categoryName, sales).forEach((row, index) => {
+      leftRows.push(exportRow([index === 0 ? categoryName : "", ...row]));
+    });
+  });
+
+  const rightRows = [
+    exportRow([], ["登帳紀錄", "", "金額"]),
+    exportRow([], ["銷售總金額", "", grossSales]),
+    exportRow([], ["-折讓", "", discountTotal]),
+    exportRow([], ["=銷貨淨額", "", netSales]),
+    blankExportRow(),
+    exportRow([], ["現金紀錄", "", "金額"]),
+    exportRow([], ["＋預備金", "", reserveCash]),
+    exportRow([], ["＝登帳現金", "", netSales + reserveCash]),
+    blankExportRow(),
+    exportRow([], ["現金盤點", "", "金額"]),
+    exportRow([], ["機上現金", "", machineCash]),
+    exportRow([], ["-預備金", "", reserveCash]),
+    exportRow([], ["＝存銀金額", "", cashDeposit]),
+    exportRow([], ["現金盤盈", "", cashDiff > 0 ? cashDiff : 0]),
+    exportRow([], ["現金盤筍", "", cashDiff < 0 ? Math.abs(cashDiff) : 0]),
+    blankExportRow(),
+    exportRow([], ["來客數", sales.length, "人"]),
+    blankExportRow(),
+    exportRow([], ["伙食費"]),
+    exportRow([], [data.mealExpense || ""]),
+    blankExportRow(),
+    exportRow([], ["當日損耗"]),
+    exportRow([], [data.dailyLoss || ""]),
+    blankExportRow(),
+    exportRow([], ["時段營收"]),
+    exportRow([], ["時段", "金額", "時段", "金額"]),
+    exportRow([], ["10~11", hourlyRevenue(sales, 10), "16~17", hourlyRevenue(sales, 16)]),
+    exportRow([], ["11~12", hourlyRevenue(sales, 11), "17~18", hourlyRevenue(sales, 17)]),
+    exportRow([], ["12~13", hourlyRevenue(sales, 12), "18~19", hourlyRevenue(sales, 18)]),
+    exportRow([], ["13~14", hourlyRevenue(sales, 13), "19~20", hourlyRevenue(sales, 19)]),
+    exportRow([], ["14~15", hourlyRevenue(sales, 14), "20~21", hourlyRevenue(sales, 20)]),
+    exportRow([], ["15~16", hourlyRevenue(sales, 15), "21", hourlyRevenue(sales, 21)]),
+    blankExportRow(),
+    exportRow([], ["庫存數量"]),
+    ...clientDailyInventoryRows(data).map((row) => exportRow([], row)),
+    blankExportRow(),
+    exportRow([], ["外送單位"]),
+    ...clientDeliveryExportRows(data).map((row) => exportRow([], row)),
+  ];
+
+  const bodyLength = Math.max(leftRows.length, rightRows.length);
+  const rows = [[`日結單 ${date}`], blankExportRow()];
+  for (let index = 0; index < bodyLength; index += 1) {
+    const left = leftRows[index] || blankExportRow();
+    const right = rightRows[index] || blankExportRow();
+    rows.push([...left.slice(0, 5), ...right.slice(5)]);
+  }
+  return { filename: `日結單-${date}.xlsx`, sheetName: "日結單", rows };
+}
+
+function buildClientMonthExportRows() {
+  const month = els.reportMonthInput.value || monthKey();
+  const sales = reportSales();
+  const netSales = sales.reduce((sum, sale) => sum + sale.totals.total, 0);
+  const grossSales = sales.reduce((sum, sale) => sum + sale.totals.subtotal, 0);
+  const discountTotal = sales.reduce((sum, sale) => sum + (sale.totals.discount || 0), 0);
+  const rows = [
+    [`月報表 ${month}`],
+    [],
+    ["月報摘要"],
+    ["項目", "數值"],
+    ["本月營收", netSales],
+    ["來客數", sales.length],
+    ["平均客單", sales.length ? Math.round(netSales / sales.length) : 0],
+    ["銷售總金額", grossSales],
+    ["折扣總金額", discountTotal],
+  ];
+  return { filename: `月報表-${month}.xlsx`, sheetName: "月報表", rows };
+}
+
 async function exportCurrentReportExcel() {
   const params = new URLSearchParams({ mode: state.reportMode });
   if (state.reportMode === "month") {
@@ -1136,6 +1327,12 @@ async function exportCurrentReportExcel() {
   } else {
     params.set("date", selectedReportDate());
   }
+  if (location.protocol === "file:") {
+    const report = state.reportMode === "month" ? buildClientMonthExportRows() : buildClientDailyExportRows();
+    await downloadFile(report.filename, xlsxBlob(report.rows, report.sheetName), "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+    return;
+  }
+
   const link = document.createElement("a");
   link.href = `/api/export-report?${params.toString()}`;
   link.target = "_blank";
@@ -1630,6 +1827,26 @@ function initEvents() {
     saveDailySheetValue(input.dataset.dailyField, input.value);
     renderDailySheet(reportSales());
   });
+  els.addDeliveryRowButton.addEventListener("click", () => {
+    const rows = collectDeliveryRowsFromDom();
+    rows.push({ unit: "", amount: "" });
+    saveDeliveryRows(rows);
+    renderDeliveryRows({ deliveryRows: rows });
+  });
+  els.deliveryRows.addEventListener("input", (event) => {
+    const input = event.target.closest("[data-delivery-field]");
+    if (!input) return;
+    updateDeliveryRowsFromInput();
+  });
+  els.deliveryRows.addEventListener("click", (event) => {
+    const button = event.target.closest("[data-delivery-delete]");
+    if (!button) return;
+    const index = Number(button.dataset.deliveryDelete);
+    const rows = collectDeliveryRowsFromDom();
+    rows.splice(index, 1);
+    saveDeliveryRows(rows);
+    renderDeliveryRows({ deliveryRows: rows });
+  });
   els.dailyProductSections.addEventListener("pointerdown", (event) => {
     const handle = event.target.closest(".sheet-drag-handle");
     const card = event.target.closest(".daily-category-card, .daily-utility-card");
@@ -1794,6 +2011,38 @@ function tickClock() {
   });
 }
 
+function preventAppZoomGestures() {
+  let lastTouchEnd = 0;
+
+  document.addEventListener(
+    "gesturestart",
+    (event) => {
+      event.preventDefault();
+    },
+    { passive: false },
+  );
+
+  document.addEventListener(
+    "touchend",
+    (event) => {
+      const now = Date.now();
+      if (now - lastTouchEnd <= 320) {
+        event.preventDefault();
+      }
+      lastTouchEnd = now;
+    },
+    { passive: false },
+  );
+
+  document.addEventListener(
+    "dblclick",
+    (event) => {
+      event.preventDefault();
+    },
+    { passive: false },
+  );
+}
+
 let activeBusinessDate = todayKey();
 
 function checkDailySalesExpiration() {
@@ -1813,6 +2062,7 @@ els.reportDateInput.value = todayKey();
 els.reportMonthInput.value = monthKey();
 normalizeProducts();
 purgeExpiredSales();
+preventAppZoomGestures();
 initEvents();
 renderAll();
 syncFromCloud();

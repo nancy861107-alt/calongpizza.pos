@@ -105,6 +105,207 @@ function csvBuffer(rows) {
   return Buffer.from(`\uFEFF${csv}`, "utf8");
 }
 
+function escapeXml(value) {
+  return String(value ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
+function encodeText(value) {
+  return new TextEncoder().encode(value);
+}
+
+function crcTable() {
+  const table = [];
+  for (let index = 0; index < 256; index += 1) {
+    let current = index;
+    for (let bit = 0; bit < 8; bit += 1) {
+      current = current & 1 ? 0xedb88320 ^ (current >>> 1) : current >>> 1;
+    }
+    table[index] = current >>> 0;
+  }
+  return table;
+}
+
+const zipCrcTable = crcTable();
+
+function crc32(bytes) {
+  let crc = 0xffffffff;
+  for (let index = 0; index < bytes.length; index += 1) {
+    crc = zipCrcTable[(crc ^ bytes[index]) & 0xff] ^ (crc >>> 8);
+  }
+  return (crc ^ 0xffffffff) >>> 0;
+}
+
+function writeUint16(view, offset, value) {
+  view.setUint16(offset, value, true);
+}
+
+function writeUint32(view, offset, value) {
+  view.setUint32(offset, value, true);
+}
+
+function concatBytes(parts) {
+  const length = parts.reduce((sum, part) => sum + part.length, 0);
+  const result = new Uint8Array(length);
+  let offset = 0;
+  parts.forEach((part) => {
+    result.set(part, offset);
+    offset += part.length;
+  });
+  return result;
+}
+
+function createZip(files) {
+  const localParts = [];
+  const centralParts = [];
+  let offset = 0;
+
+  files.forEach((file) => {
+    const nameBytes = encodeText(file.name);
+    const data = encodeText(file.content);
+    const crc = crc32(data);
+
+    const localHeader = new Uint8Array(30 + nameBytes.length);
+    const localView = new DataView(localHeader.buffer);
+    writeUint32(localView, 0, 0x04034b50);
+    writeUint16(localView, 4, 20);
+    writeUint16(localView, 6, 0);
+    writeUint16(localView, 8, 0);
+    writeUint16(localView, 10, 0);
+    writeUint16(localView, 12, 0);
+    writeUint32(localView, 14, crc);
+    writeUint32(localView, 18, data.length);
+    writeUint32(localView, 22, data.length);
+    writeUint16(localView, 26, nameBytes.length);
+    writeUint16(localView, 28, 0);
+    localHeader.set(nameBytes, 30);
+    localParts.push(localHeader, data);
+
+    const centralHeader = new Uint8Array(46 + nameBytes.length);
+    const centralView = new DataView(centralHeader.buffer);
+    writeUint32(centralView, 0, 0x02014b50);
+    writeUint16(centralView, 4, 20);
+    writeUint16(centralView, 6, 20);
+    writeUint16(centralView, 8, 0);
+    writeUint16(centralView, 10, 0);
+    writeUint16(centralView, 12, 0);
+    writeUint16(centralView, 14, 0);
+    writeUint32(centralView, 16, crc);
+    writeUint32(centralView, 20, data.length);
+    writeUint32(centralView, 24, data.length);
+    writeUint16(centralView, 28, nameBytes.length);
+    writeUint16(centralView, 30, 0);
+    writeUint16(centralView, 32, 0);
+    writeUint16(centralView, 34, 0);
+    writeUint16(centralView, 36, 0);
+    writeUint32(centralView, 38, 0);
+    writeUint32(centralView, 42, offset);
+    centralHeader.set(nameBytes, 46);
+    centralParts.push(centralHeader);
+    offset += localHeader.length + data.length;
+  });
+
+  const centralDirectory = concatBytes(centralParts);
+  const endRecord = new Uint8Array(22);
+  const endView = new DataView(endRecord.buffer);
+  writeUint32(endView, 0, 0x06054b50);
+  writeUint16(endView, 4, 0);
+  writeUint16(endView, 6, 0);
+  writeUint16(endView, 8, files.length);
+  writeUint16(endView, 10, files.length);
+  writeUint32(endView, 12, centralDirectory.length);
+  writeUint32(endView, 16, offset);
+  writeUint16(endView, 20, 0);
+
+  return concatBytes([...localParts, centralDirectory, endRecord]);
+}
+
+function columnName(index) {
+  let name = "";
+  let current = index;
+  while (current > 0) {
+    const remainder = (current - 1) % 26;
+    name = String.fromCharCode(65 + remainder) + name;
+    current = Math.floor((current - 1) / 26);
+  }
+  return name;
+}
+
+function sheetCell(value, rowIndex, columnIndex) {
+  const reference = `${columnName(columnIndex)}${rowIndex}`;
+  if (typeof value === "number" && Number.isFinite(value)) {
+    return `<c r="${reference}"><v>${value}</v></c>`;
+  }
+  return `<c r="${reference}" t="inlineStr"><is><t>${escapeXml(value)}</t></is></c>`;
+}
+
+function sheetXml(rows) {
+  const rowXml = rows
+    .map((row, rowIndex) => {
+      const cells = row.map((cell, columnIndex) => sheetCell(cell, rowIndex + 1, columnIndex + 1)).join("");
+      const height = rowIndex === 0 ? 24 : 21;
+      return `<row r="${rowIndex + 1}" ht="${height}" customHeight="1">${cells}</row>`;
+    })
+    .join("");
+
+  return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">
+  <cols>
+    <col min="1" max="1" width="6" customWidth="1"/>
+    <col min="2" max="2" width="18" customWidth="1"/>
+    <col min="3" max="3" width="9" customWidth="1"/>
+    <col min="4" max="4" width="12" customWidth="1"/>
+    <col min="5" max="5" width="3" customWidth="1"/>
+    <col min="6" max="6" width="13" customWidth="1"/>
+    <col min="7" max="7" width="12" customWidth="1"/>
+    <col min="8" max="8" width="12" customWidth="1"/>
+    <col min="9" max="9" width="12" customWidth="1"/>
+  </cols>
+  <sheetData>${rowXml}</sheetData>
+</worksheet>`;
+}
+
+function xlsxBuffer(rows, sheetName = "日結單") {
+  const files = [
+    {
+      name: "[Content_Types].xml",
+      content: `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">
+  <Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>
+  <Default Extension="xml" ContentType="application/xml"/>
+  <Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/>
+  <Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>
+</Types>`,
+    },
+    {
+      name: "_rels/.rels",
+      content: `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+  <Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/>
+</Relationships>`,
+    },
+    {
+      name: "xl/workbook.xml",
+      content: `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">
+  <sheets><sheet name="${escapeXml(sheetName)}" sheetId="1" r:id="rId1"/></sheets>
+</workbook>`,
+    },
+    {
+      name: "xl/_rels/workbook.xml.rels",
+      content: `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+  <Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/>
+</Relationships>`,
+    },
+    { name: "xl/worksheets/sheet1.xml", content: sheetXml(rows) },
+  ];
+  return Buffer.from(createZip(files));
+}
+
 function rowsForCategory(categoryName, products, sales) {
   const soldMap = new Map();
   sales.forEach((sale) => {
@@ -136,6 +337,109 @@ function hourlyRevenue(sales, hour) {
   return sales.reduce((sum, sale) => {
     return dateParts(sale.createdAt).hour === hour ? sum + moneyNumber(sale.totals?.total) : sum;
   }, 0);
+}
+
+function blankReportRow() {
+  return Array.from({ length: 9 }, () => "");
+}
+
+function reportRow(left = [], right = []) {
+  const row = blankReportRow();
+  left.forEach((value, index) => {
+    row[index] = value;
+  });
+  right.forEach((value, index) => {
+    row[index + 5] = value;
+  });
+  return row;
+}
+
+function dailyInventoryRows(data) {
+  return [
+    ["", "面皮", "鋁盒"],
+    ["前日庫存", data.doughPreviousStock || "", data.boxPreviousStock || ""],
+    ["進貨", data.doughPurchase || "", data.boxPurchase || ""],
+    ["當日庫存", data.doughCurrentStock || "", data.boxCurrentStock || ""],
+    ["消耗用量", data.doughUsed || "", data.boxUsed || ""],
+    ["銷售用量", data.doughSold || "", data.boxSold || ""],
+  ];
+}
+
+function dailyDeliveryRows(data) {
+  const rows = Array.isArray(data.deliveryRows) ? data.deliveryRows : [];
+  const total = rows.reduce((sum, row) => sum + moneyNumber(row.amount), 0);
+  const visibleRows = rows.length ? rows : [{ unit: "", amount: "" }];
+  return [["單位", "金額"], ...visibleRows.map((row) => [row.unit || "", moneyNumber(row.amount) || ""]), ["總和", total]];
+}
+
+function buildDailyTemplateRows({ date, categories, products, daySales, data }) {
+  const netSales = daySales.reduce((sum, sale) => sum + moneyNumber(sale.totals?.total), 0);
+  const grossSales = daySales.reduce((sum, sale) => sum + moneyNumber(sale.totals?.subtotal), 0);
+  const discountTotal = daySales.reduce((sum, sale) => sum + moneyNumber(sale.totals?.discount), 0);
+  const reserveCash = Number(data.reserveCash || 0);
+  const machineCash = Number(data.machineCash || 0);
+  const mealExpense = data.mealExpense || "";
+  const dailyLoss = data.dailyLoss || "";
+  const cashDeposit = Math.max(0, machineCash - reserveCash);
+  const cashDiff = cashDeposit - netSales;
+
+  const leftRows = [reportRow(["", "產品", "數量", "金額"])];
+  categories.forEach((categoryName) => {
+    const categoryRows = rowsForCategory(categoryName, products, daySales);
+    categoryRows.forEach((row, index) => {
+      leftRows.push(reportRow([index === 0 ? categoryName : "", ...row]));
+    });
+  });
+
+  const rightRows = [
+    reportRow([], ["登帳紀錄", "", "金額"]),
+    reportRow([], ["銷售總金額", "", grossSales]),
+    reportRow([], ["-折讓", "", discountTotal]),
+    reportRow([], ["=銷貨淨額", "", netSales]),
+    blankReportRow(),
+    reportRow([], ["現金紀錄", "", "金額"]),
+    reportRow([], ["＋預備金", "", reserveCash]),
+    reportRow([], ["＝登帳現金", "", netSales + reserveCash]),
+    blankReportRow(),
+    reportRow([], ["現金盤點", "", "金額"]),
+    reportRow([], ["機上現金", "", machineCash]),
+    reportRow([], ["-預備金", "", reserveCash]),
+    reportRow([], ["＝存銀金額", "", cashDeposit]),
+    reportRow([], ["現金盤盈", "", cashDiff > 0 ? cashDiff : 0]),
+    reportRow([], ["現金盤筍", "", cashDiff < 0 ? Math.abs(cashDiff) : 0]),
+    blankReportRow(),
+    reportRow([], ["來客數", daySales.length, "人"]),
+    blankReportRow(),
+    reportRow([], ["伙食費"]),
+    reportRow([], [mealExpense]),
+    blankReportRow(),
+    reportRow([], ["當日損耗"]),
+    reportRow([], [dailyLoss]),
+    blankReportRow(),
+    reportRow([], ["時段營收"]),
+    reportRow([], ["時段", "金額", "時段", "金額"]),
+    reportRow([], ["10~11", hourlyRevenue(daySales, 10), "16~17", hourlyRevenue(daySales, 16)]),
+    reportRow([], ["11~12", hourlyRevenue(daySales, 11), "17~18", hourlyRevenue(daySales, 17)]),
+    reportRow([], ["12~13", hourlyRevenue(daySales, 12), "18~19", hourlyRevenue(daySales, 18)]),
+    reportRow([], ["13~14", hourlyRevenue(daySales, 13), "19~20", hourlyRevenue(daySales, 19)]),
+    reportRow([], ["14~15", hourlyRevenue(daySales, 14), "20~21", hourlyRevenue(daySales, 20)]),
+    reportRow([], ["15~16", hourlyRevenue(daySales, 15), "21", hourlyRevenue(daySales, 21)]),
+    blankReportRow(),
+    reportRow([], ["庫存數量"]),
+    ...dailyInventoryRows(data).map((row) => reportRow([], row)),
+    blankReportRow(),
+    reportRow([], ["外送單位"]),
+    ...dailyDeliveryRows(data).map((row) => reportRow([], row)),
+  ];
+
+  const bodyLength = Math.max(leftRows.length, rightRows.length);
+  const rows = [[`日結單 ${date}`], blankReportRow()];
+  for (let index = 0; index < bodyLength; index += 1) {
+    const left = leftRows[index] || blankReportRow();
+    const right = rightRows[index] || blankReportRow();
+    rows.push([...left.slice(0, 5), ...right.slice(5)]);
+  }
+  return rows;
 }
 
 function buildReportRows(url) {
@@ -182,83 +486,25 @@ function buildReportRows(url) {
     categories.forEach((categoryName) => {
       rows.push([categoryName], ["商品", "數量", "金額"], ...rowsForCategory(categoryName, products, monthSales), []);
     });
-    return { filename: `月報表-${month}.csv`, rows };
+    return { filename: `月報表-${month}.xlsx`, sheetName: "月報表", rows };
   }
 
   const date = url.searchParams.get("date") || dateParts().date;
   const daySales = sales.filter((sale) => dateParts(sale.createdAt).date === date);
   const data = { reserveCash: 3000, ...(db[`pos-daily-sheet-${date}`] || {}) };
-  const netSales = daySales.reduce((sum, sale) => sum + moneyNumber(sale.totals?.total), 0);
-  const grossSales = daySales.reduce((sum, sale) => sum + moneyNumber(sale.totals?.subtotal), 0);
-  const discountTotal = daySales.reduce((sum, sale) => sum + moneyNumber(sale.totals?.discount), 0);
-  const reserveCash = Number(data.reserveCash || 0);
-  const machineCash = Number(data.machineCash || 0);
-  const mealExpense = data.mealExpense || "";
-  const dailyLoss = data.dailyLoss || "";
-  const cashDeposit = Math.max(0, machineCash - reserveCash);
-  const cashDiff = cashDeposit - netSales;
-  const rows = [
-    [`日結單 ${date}`],
-    [],
-    ["日報摘要"],
-    ["項目", "數值"],
-    ["今日營收", netSales],
-    ["來客數", daySales.length],
-    ["平均客單", daySales.length ? Math.round(netSales / daySales.length) : 0],
-    ["折扣總金額", discountTotal],
-    [],
-  ];
-  categories.forEach((categoryName) => {
-    rows.push([categoryName], ["商品", "數量", "金額"], ...rowsForCategory(categoryName, products, daySales), []);
-  });
-  rows.push(
-    ["登帳紀錄"],
-    ["項目", "金額"],
-    ["銷售總金額", grossSales],
-    ["-折讓", discountTotal],
-    ["=銷貨淨額", netSales],
-    [],
-    ["現金紀錄"],
-    ["項目", "金額"],
-    ["＋預備金", reserveCash],
-    ["＝登帳現金", netSales + reserveCash],
-    [],
-    ["現金盤點"],
-    ["項目", "金額"],
-    ["機上現金", machineCash],
-    ["-預備金", reserveCash],
-    ["＝存銀金額", cashDeposit],
-    ["現金盤盈", cashDiff > 0 ? cashDiff : 0],
-    ["現金盤筍", cashDiff < 0 ? Math.abs(cashDiff) : 0],
-    [],
-    ["伙食費"],
-    ["內容"],
-    [mealExpense],
-    [],
-    ["當日損耗"],
-    ["內容"],
-    [dailyLoss],
-    [],
-    ["時段營收"],
-    ["時段", "金額", "時段", "金額"],
-    ["10~11", hourlyRevenue(daySales, 10), "16~17", hourlyRevenue(daySales, 16)],
-    ["11~12", hourlyRevenue(daySales, 11), "17~18", hourlyRevenue(daySales, 17)],
-    ["12~13", hourlyRevenue(daySales, 12), "18~19", hourlyRevenue(daySales, 18)],
-    ["13~14", hourlyRevenue(daySales, 13), "19~20", hourlyRevenue(daySales, 19)],
-    ["14~15", hourlyRevenue(daySales, 14), "20~21", hourlyRevenue(daySales, 20)],
-    ["15~16", hourlyRevenue(daySales, 15), "21", hourlyRevenue(daySales, 21)],
-  );
-  return { filename: `日結單-${date}.csv`, rows };
+  const rows = buildDailyTemplateRows({ date, categories, products, daySales, data });
+  return { filename: `日結單-${date}.xlsx`, sheetName: "日結單", rows };
 }
 
-function sendReportCsv(response, url) {
+function sendReportXlsx(response, url) {
   const report = buildReportRows(url);
+  const body = xlsxBuffer(report.rows, report.sheetName);
   response.writeHead(200, {
-    "Content-Type": "text/csv; charset=utf-8",
+    "Content-Type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
     "Content-Disposition": `attachment; filename*=UTF-8''${encodeURIComponent(report.filename)}`,
     "Cache-Control": "no-store",
   });
-  response.end(csvBuffer(report.rows));
+  response.end(body);
 }
 
 function authToken() {
@@ -388,7 +634,7 @@ async function handleApi(request, response, url) {
   }
 
   if (url.pathname === "/api/export-report" && request.method === "GET") {
-    sendReportCsv(response, url);
+    sendReportXlsx(response, url);
     return;
   }
 

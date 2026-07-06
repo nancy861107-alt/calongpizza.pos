@@ -2,7 +2,7 @@
 <html lang="zh-Hant">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
     <meta name="theme-color" content="#15241d" />
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -16,7 +16,7 @@
     <link rel="apple-touch-icon" sizes="512x512" href="./icon-512.png" />
     <link rel="icon" href="./app-icon.svg" type="image/svg+xml" />
     <link rel="icon" href="./icon-192.png" type="image/png" />
-    <link rel="stylesheet" href="./styles.css?v=20260706-larger-category-tabs" />
+    <link rel="stylesheet" href="./styles.css?v=20260706-delivery-card" />
   </head>
   <body data-view="checkout">
     <div class="app-shell">
@@ -72,10 +72,6 @@
 
             <section class="cart-panel" aria-label="購物車">
               <div class="panel-heading">
-                <div>
-                  <p class="eyebrow">目前交易</p>
-                  <h3>購物車</h3>
-                </div>
                 <div class="cart-heading-actions">
                   <span id="cartCount" class="pill">0 件</span>
                   <button class="ghost-button small" type="button" id="clearCartButton" title="清空購物車">清空</button>
@@ -227,6 +223,79 @@
                     <tbody id="paymentReportTable"></tbody>
                   </table>
                 </section>
+                <section class="sheet-box sheet-table-box daily-utility-card" data-daily-card="inventory">
+                  <h4><span class="drag-handle sheet-drag-handle" aria-hidden="true">☰</span><span>庫存數量</span></h4>
+                  <table class="inventory-table">
+                    <colgroup>
+                      <col class="inventory-label-col" />
+                      <col class="inventory-value-col" />
+                      <col class="inventory-value-col" />
+                    </colgroup>
+                    <thead>
+                      <tr>
+                        <th></th>
+                        <th>面皮</th>
+                        <th>鋁盒</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <th>前日庫存</th>
+                        <td><input data-daily-field="doughPreviousStock" type="number" min="0" inputmode="numeric" /></td>
+                        <td><input data-daily-field="boxPreviousStock" type="number" min="0" inputmode="numeric" /></td>
+                      </tr>
+                      <tr>
+                        <th>進貨</th>
+                        <td><input data-daily-field="doughPurchase" type="number" min="0" inputmode="numeric" /></td>
+                        <td><input data-daily-field="boxPurchase" type="number" min="0" inputmode="numeric" /></td>
+                      </tr>
+                      <tr>
+                        <th>當日庫存</th>
+                        <td><input data-daily-field="doughCurrentStock" type="number" min="0" inputmode="numeric" /></td>
+                        <td><input data-daily-field="boxCurrentStock" type="number" min="0" inputmode="numeric" /></td>
+                      </tr>
+                      <tr>
+                        <th>消耗用量</th>
+                        <td><input data-daily-field="doughUsed" type="number" min="0" inputmode="numeric" /></td>
+                        <td><input data-daily-field="boxUsed" type="number" min="0" inputmode="numeric" /></td>
+                      </tr>
+                      <tr>
+                        <th>銷售用量</th>
+                        <td><input data-daily-field="doughSold" type="number" min="0" inputmode="numeric" /></td>
+                        <td><input data-daily-field="boxSold" type="number" min="0" inputmode="numeric" /></td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </section>
+                <section class="sheet-box sheet-table-box daily-utility-card" data-daily-card="delivery">
+                  <h4>
+                    <span class="drag-handle sheet-drag-handle" aria-hidden="true">☰</span>
+                    <span>外送單位</span>
+                    <button class="ghost-button small inline-card-button" type="button" id="addDeliveryRowButton">新增</button>
+                  </h4>
+                  <table class="delivery-table">
+                    <colgroup>
+                      <col class="delivery-unit-col" />
+                      <col class="delivery-amount-col" />
+                      <col class="delivery-action-col" />
+                    </colgroup>
+                    <thead>
+                      <tr>
+                        <th>單位</th>
+                        <th>金額</th>
+                        <th></th>
+                      </tr>
+                    </thead>
+                    <tbody id="deliveryRows"></tbody>
+                    <tfoot>
+                      <tr>
+                        <th>總和</th>
+                        <td id="deliveryTotal">$0</td>
+                        <td></td>
+                      </tr>
+                    </tfoot>
+                  </table>
+                </section>
               </div>
             </div>
           </section>
@@ -336,7 +405,7 @@
       </main>
     </div>
 
-    <script src="./keypad-helpers.js?v=20260706-larger-category-tabs"></script>
-    <script src="./app.js?v=20260706-larger-category-tabs"></script>
+    <script src="./keypad-helpers.js?v=20260707-report-size-match"></script>
+    <script src="./app.js?v=20260707-report-size-match"></script>
   </body>
 </html>

@@ -17,6 +17,11 @@
   -webkit-tap-highlight-color: transparent;
 }
 
+html {
+  touch-action: manipulation;
+  -webkit-text-size-adjust: 100%;
+}
+
 body {
   margin: 0;
   min-height: 100vh;
@@ -26,6 +31,9 @@ body {
     linear-gradient(315deg, rgba(217, 119, 6, 0.12), transparent 28%),
     var(--bg);
   font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  touch-action: manipulation;
+  overscroll-behavior: none;
+  user-select: none;
 }
 
 button,
@@ -927,13 +935,19 @@ select {
   box-shadow: var(--shadow);
 }
 
+.daily-utility-card {
+  border-color: #d8e0d5;
+  background: #ffffff;
+  box-shadow: 0 12px 28px rgba(23, 33, 27, 0.08);
+}
+
 .sheet-box h4,
 #dailySheet .table-heading,
 #salesView .report-grid .table-heading {
-  min-height: 48px;
-  padding: 14px 16px;
+  min-height: 46px;
+  padding: 12px 16px;
   border-bottom: 1px solid var(--line);
-  background: #fbfcfa;
+  background: #f8faf6;
 }
 
 .sheet-box h4,
@@ -945,28 +959,46 @@ select {
   color: var(--ink);
   font-size: 16px;
   font-weight: 900;
+  letter-spacing: 0;
+}
+
+.daily-utility-card h4 {
+  font-size: 15px;
+}
+
+.inline-card-button {
+  margin-left: auto;
+  min-height: 30px;
+  padding: 6px 10px;
+  font-size: 12px;
 }
 
 .sheet-list {
   display: grid;
-  gap: 8px;
+  gap: 6px;
   margin: 0;
-  padding: 14px 16px;
+  padding: 12px 16px;
 }
 
 .sheet-list div {
   display: flex;
+  min-height: 28px;
+  align-items: center;
   justify-content: space-between;
   gap: 12px;
 }
 
 .sheet-list dt {
   color: var(--muted);
+  font-size: 13px;
+  font-weight: 800;
 }
 
 .sheet-list dd {
   margin: 0;
+  color: var(--ink);
   font-weight: 900;
+  font-variant-numeric: tabular-nums;
 }
 
 .compact-list {
@@ -984,9 +1016,10 @@ select {
 
 .account-summary-section h5 {
   margin: 0;
-  padding: 12px 16px 0;
+  min-height: 36px;
+  padding: 10px 16px 0;
   color: var(--ink);
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 900;
 }
 
@@ -1007,8 +1040,8 @@ select {
 .sheet-fields,
 .mini-grid {
   display: grid;
-  gap: 10px;
-  padding: 14px 16px;
+  gap: 8px;
+  padding: 12px 16px;
 }
 
 .sheet-fields label,
@@ -1025,16 +1058,17 @@ select {
 .mini-grid input,
 #inventoryTable input {
   width: 100%;
-  min-height: 36px;
+  min-height: 34px;
   padding: 8px 10px;
   border: 1px solid var(--line);
-  border-radius: 8px;
-  background: white;
+  border-radius: 6px;
+  background: #fbfdf9;
   color: var(--ink);
+  font-weight: 800;
 }
 
 .sheet-fields textarea {
-  min-height: 86px;
+  min-height: 78px;
   resize: vertical;
 }
 
@@ -1096,8 +1130,8 @@ select {
 #salesView .report-grid td,
 .sheet-table-box th,
 .sheet-table-box td {
-  height: 42px;
-  padding: 10px 12px;
+  height: 40px;
+  padding: 9px 12px;
   border-bottom: 1px solid var(--line);
   text-align: left;
   vertical-align: middle;
@@ -1111,6 +1145,12 @@ select {
   color: var(--muted);
   font-size: 12px;
   font-weight: 900;
+}
+
+.sheet-table-box td {
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 800;
 }
 
 .sheet-mini-table td:nth-child(2),
@@ -1176,6 +1216,118 @@ select {
 .hourly-table th:nth-child(3),
 .hourly-table td:not(:first-child) {
   text-align: center;
+}
+
+.inventory-table {
+  table-layout: fixed;
+}
+
+.inventory-label-col {
+  width: 42%;
+}
+
+.inventory-value-col {
+  width: 29%;
+}
+
+.inventory-table th,
+.inventory-table td {
+  height: 40px;
+  padding: 4px 6px;
+  text-align: center;
+}
+
+.sheet-table-box .inventory-table th,
+.sheet-table-box .inventory-table td,
+.sheet-table-box .inventory-table th:nth-child(2),
+.sheet-table-box .inventory-table th:nth-child(3),
+.sheet-table-box .inventory-table td:not(:first-child) {
+  text-align: center;
+}
+
+.inventory-table thead th {
+  font-size: 12px;
+}
+
+.inventory-table tbody th {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.inventory-table input {
+  width: 100%;
+  height: 30px;
+  border: 1px solid #cfd8cf;
+  border-radius: 6px;
+  background: #fbfdf9;
+  color: var(--ink);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 800;
+  text-align: center;
+}
+
+.inventory-table input:focus {
+  outline: 2px solid rgba(15, 123, 99, 0.22);
+  outline-offset: -2px;
+  background: rgba(15, 123, 99, 0.06);
+}
+
+.delivery-table {
+  table-layout: fixed;
+}
+
+.delivery-unit-col {
+  width: 48%;
+}
+
+.delivery-amount-col {
+  width: 36%;
+}
+
+.delivery-action-col {
+  width: 16%;
+}
+
+.sheet-table-box .delivery-table th,
+.sheet-table-box .delivery-table td,
+.sheet-table-box .delivery-table th:nth-child(2),
+.sheet-table-box .delivery-table th:nth-child(3),
+.sheet-table-box .delivery-table td:not(:first-child) {
+  text-align: center;
+}
+
+.delivery-table input {
+  width: 100%;
+  height: 30px;
+  border: 1px solid #cfd8cf;
+  border-radius: 6px;
+  background: #fbfdf9;
+  color: var(--ink);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 800;
+  text-align: center;
+}
+
+.delivery-table input:focus {
+  outline: 2px solid rgba(15, 123, 99, 0.22);
+  outline-offset: -2px;
+  background: rgba(15, 123, 99, 0.06);
+}
+
+.delivery-table tfoot th,
+.delivery-table tfoot td {
+  background: #f8faf6;
+  color: var(--ink);
+  font-weight: 900;
+}
+
+.delivery-delete-button {
+  min-width: 34px;
+  min-height: 30px;
+  padding: 0;
 }
 
 .mini-grid {
