@@ -247,11 +247,16 @@ function purgeExpiredSales(options = {}) {
 async function saveCloudValue(key, value) {
   if (!cloudSync.enabled || !cloudSync.ready || cloudSync.syncing) return false;
   try {
-    await fetch(`/api/storage/${encodeURIComponent(key)}`, {
+    const response = await fetch(`/api/storage/${encodeURIComponent(key)}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ value }),
     });
+    if (response.status === 401) {
+      window.location.href = "/login";
+      return false;
+    }
+    if (!response.ok) return false;
     return true;
   } catch {
     // Keep local data available if the cloud host is temporarily unreachable.
@@ -265,6 +270,10 @@ async function syncFromCloud(options = {}) {
   let shouldSeedCloud = false;
   try {
     const response = await fetch("/api/storage", { cache: "no-store" });
+    if (response.status === 401) {
+      window.location.href = "/login";
+      return;
+    }
     if (!response.ok) throw new Error("Cloud storage unavailable");
     const data = await response.json();
     shouldSeedCloud = Object.keys(data).length === 0;
