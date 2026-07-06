@@ -119,23 +119,6 @@ function normalizeProducts() {
       categoryNames.add(product.category);
     }
   });
-  state.categories.sort((a, b) => {
-    const aIndex = mainCategoryNames.indexOf(a.name);
-    const bIndex = mainCategoryNames.indexOf(b.name);
-    if (aIndex === -1 && bIndex === -1) return 0;
-    if (aIndex === -1) return 1;
-    if (bIndex === -1) return -1;
-    return aIndex - bIndex;
-  });
-
-  const grillIndex = state.categories.findIndex((category) => category.name === "烤物");
-  const drinkIndex = state.categories.findIndex((category) => category.name === "飲料");
-  if (grillIndex !== -1 && drinkIndex !== -1 && drinkIndex < grillIndex) {
-    const [drinkCategory] = state.categories.splice(drinkIndex, 1);
-    const updatedGrillIndex = state.categories.findIndex((category) => category.name === "烤物");
-    state.categories.splice(updatedGrillIndex + 1, 0, drinkCategory);
-  }
-
   save("pos-products", state.products);
   save("pos-categories", state.categories);
   save("pos-settings", state.settings);
@@ -1710,21 +1693,7 @@ function dailySheetOrder() {
   const validSavedOrder = savedOrder.filter((key) => knownCards.has(key));
   const savedCategoryOrder = validSavedOrder.filter((key) => key.startsWith("category:"));
   const missingCategoryCards = defaultCategoryOrder.filter((key) => !savedCategoryOrder.includes(key));
-  const order = [...savedCategoryOrder, ...missingCategoryCards, ...defaultUtilityOrder];
-
-  const grillCategory = state.categories.find((category) => category.name === "烤物");
-  const drinkCategory = state.categories.find((category) => category.name === "飲料");
-  if (!grillCategory || !drinkCategory) return order;
-
-  const grillKey = `category:${grillCategory.id}`;
-  const drinkKey = `category:${drinkCategory.id}`;
-  const grillIndex = order.indexOf(grillKey);
-  const drinkIndex = order.indexOf(drinkKey);
-  if (grillIndex === -1 || drinkIndex === -1 || drinkIndex > grillIndex) return order;
-
-  order.splice(drinkIndex, 1);
-  order.splice(order.indexOf(grillKey) + 1, 0, drinkKey);
-  return order;
+  return [...savedCategoryOrder, ...missingCategoryCards, ...defaultUtilityOrder];
 }
 
 function applyDailySheetOrder() {
