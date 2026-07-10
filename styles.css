@@ -453,13 +453,14 @@ select {
 }
 
 .category-tab {
-  flex: 1 1 118px;
-  min-height: 44px;
-  padding: 0 16px;
+  flex: 1 1 130px;
+  min-height: 54px;
+  padding: 0 20px;
   border: 1px solid var(--line-strong);
   border-radius: 999px;
   background: white;
   color: var(--muted);
+  font-size: 17px;
   font-weight: 850;
   white-space: normal;
   touch-action: manipulation;
@@ -932,9 +933,9 @@ select {
   }
 
   body[data-view="checkout"] .category-tab {
-    min-height: 58px;
-    padding: 0 20px;
-    font-size: 17px;
+    min-height: 72px;
+    padding: 0 26px;
+    font-size: 20px;
   }
 
   body[data-view="checkout"] .product-grid {

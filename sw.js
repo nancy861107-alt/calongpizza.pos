@@ -1,10 +1,10 @@
-const CACHE_NAME = "pos-system-20260710-month-daily";
+const CACHE_NAME = "pos-system-20260710-bigger-tabs";
 const ASSETS = [
   "./",
   "./index.html",
-  "./styles.css?v=20260710-month-daily",
-  "./keypad-helpers.js?v=20260710-month-daily",
-  "./app.js?v=20260710-month-daily",
+  "./styles.css?v=20260710-bigger-tabs",
+  "./keypad-helpers.js?v=20260710-bigger-tabs",
+  "./app.js?v=20260710-bigger-tabs",
   "./manifest.json",
   "./manifest.webmanifest",
   "./app-icon.svg",
