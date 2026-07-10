@@ -74,9 +74,35 @@ function parseServiceAccount() {
   return null;
 }
 
+// Preferred transport: a Google Apps Script web app running as the Drive
+// owner. Google no longer grants service accounts storage quota in personal
+// Drives, so the JWT path below only remains for Workspace shared drives.
+const GDRIVE_WEBAPP_URL = process.env.GDRIVE_WEBAPP_URL || "";
+const GDRIVE_WEBAPP_SECRET = process.env.GDRIVE_WEBAPP_SECRET || "";
+
 const gdriveKey = parseServiceAccount();
-const gdriveEnabled = Boolean(GDRIVE_FOLDER_ID && gdriveKey);
+const webappEnabled = Boolean(GDRIVE_WEBAPP_URL && GDRIVE_WEBAPP_SECRET);
+const gdriveEnabled = webappEnabled || Boolean(GDRIVE_FOLDER_ID && gdriveKey);
 const gdrive = { token: "", tokenExpiresAt: 0, fileId: "", timer: null, lastBackupAt: "", lastError: "", restoredFrom: "" };
+
+async function webappRequest(action, content) {
+  const response = await fetch(GDRIVE_WEBAPP_URL, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ secret: GDRIVE_WEBAPP_SECRET, action, content }),
+    redirect: "follow",
+  });
+  const text = await response.text();
+  if (!response.ok) throw new Error(`webapp ${action} failed (${response.status}) ${text.slice(0, 300)}`);
+  let data;
+  try {
+    data = JSON.parse(text);
+  } catch {
+    throw new Error(`webapp ${action} returned non-JSON: ${text.slice(0, 300)}`);
+  }
+  if (!data.ok) throw new Error(`webapp ${action} rejected: ${(data.error || "unknown").slice(0, 300)}`);
+  return data;
+}
 
 async function gdriveAccessToken() {
   const now = Math.floor(Date.now() / 1000);
@@ -117,6 +143,10 @@ async function gdriveFindBackupFile(token) {
 }
 
 async function gdriveUploadBackup(content) {
+  if (webappEnabled) {
+    await webappRequest("upload", content);
+    return;
+  }
   const token = await gdriveAccessToken();
   if (!gdrive.fileId) {
     const existing = await gdriveFindBackupFile(token);
@@ -179,21 +209,35 @@ async function restoreFromDriveIfEmpty() {
     return;
   }
   try {
-    const token = await gdriveAccessToken();
-    const file = await gdriveFindBackupFile(token);
-    if (!file) {
-      console.log("[gdrive] no backup found in folder, starting fresh");
-      return;
+    let content = "";
+    let modifiedTime = "unknown";
+    if (webappEnabled) {
+      const data = await webappRequest("download");
+      if (!data.found) {
+        console.log("[gdrive] no backup found in folder, starting fresh");
+        return;
+      }
+      content = data.content || "";
+      modifiedTime = data.modifiedTime || "unknown";
+    } else {
+      const token = await gdriveAccessToken();
+      const file = await gdriveFindBackupFile(token);
+      if (!file) {
+        console.log("[gdrive] no backup found in folder, starting fresh");
+        return;
+      }
+      const response = await fetch(`${GDRIVE_API_BASE}/drive/v3/files/${file.id}?alt=media&supportsAllDrives=true`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!response.ok) throw new Error(`download failed (${response.status}) ${(await response.text()).slice(0, 300)}`);
+      content = await response.text();
+      modifiedTime = file.modifiedTime || "unknown";
+      gdrive.fileId = file.id;
     }
-    const response = await fetch(`${GDRIVE_API_BASE}/drive/v3/files/${file.id}?alt=media&supportsAllDrives=true`, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    if (!response.ok) throw new Error(`download failed (${response.status}) ${(await response.text()).slice(0, 300)}`);
-    const parsed = JSON.parse(await response.text());
+    const parsed = JSON.parse(content);
     if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) throw new Error("backup is not an object");
-    gdrive.fileId = file.id;
     writeDb(parsed);
-    gdrive.restoredFrom = file.modifiedTime || "unknown";
+    gdrive.restoredFrom = modifiedTime;
     console.log(`[gdrive] restored backup (last modified ${gdrive.restoredFrom})`);
   } catch (error) {
     console.error("[gdrive] restore failed:", error.message || error);
@@ -824,6 +868,7 @@ async function handleApi(request, response, url) {
   if (url.pathname === "/api/backup-status") {
     sendJson(response, 200, {
       enabled: gdriveEnabled,
+      mode: webappEnabled ? "webapp" : gdriveEnabled ? "service-account" : "off",
       serviceAccount: gdriveKey ? gdriveKey.client_email : "",
       folderId: GDRIVE_FOLDER_ID,
       lastBackupAt: gdrive.lastBackupAt,

@@ -16,3 +16,7 @@ services:
         sync: false
       - key: GDRIVE_FOLDER_ID
         sync: false
+      - key: GDRIVE_WEBAPP_URL
+        sync: false
+      - key: GDRIVE_WEBAPP_SECRET
+        sync: false
