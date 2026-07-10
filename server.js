@@ -98,7 +98,7 @@ async function gdriveAccessToken() {
       assertion: `${unsigned}.${signature}`,
     }),
   });
-  if (!response.ok) throw new Error(`token request failed (${response.status})`);
+  if (!response.ok) throw new Error(`token request failed (${response.status}) ${(await response.text()).slice(0, 300)}`);
   const data = await response.json();
   gdrive.token = data.access_token;
   gdrive.tokenExpiresAt = now + (Number(data.expires_in) || 3600);
@@ -111,7 +111,7 @@ async function gdriveFindBackupFile(token) {
     `${GDRIVE_API_BASE}/drive/v3/files?q=${query}&fields=files(id,name,modifiedTime)&pageSize=1&supportsAllDrives=true&includeItemsFromAllDrives=true`,
     { headers: { Authorization: `Bearer ${token}` } },
   );
-  if (!response.ok) throw new Error(`file search failed (${response.status})`);
+  if (!response.ok) throw new Error(`file search failed (${response.status}) ${(await response.text()).slice(0, 300)}`);
   const data = await response.json();
   return (data.files || [])[0] || null;
 }
@@ -131,7 +131,7 @@ async function gdriveUploadBackup(content) {
       gdrive.fileId = "";
       return gdriveUploadBackup(content);
     }
-    if (!response.ok) throw new Error(`file update failed (${response.status})`);
+    if (!response.ok) throw new Error(`file update failed (${response.status}) ${(await response.text()).slice(0, 300)}`);
     return;
   }
   const boundary = `calongpos${Date.now()}`;
@@ -143,7 +143,7 @@ async function gdriveUploadBackup(content) {
     `${GDRIVE_API_BASE}/upload/drive/v3/files?uploadType=multipart&fields=id&supportsAllDrives=true`,
     { method: "POST", headers: { Authorization: `Bearer ${token}`, "Content-Type": `multipart/related; boundary=${boundary}` }, body },
   );
-  if (!response.ok) throw new Error(`file create failed (${response.status})`);
+  if (!response.ok) throw new Error(`file create failed (${response.status}) ${(await response.text()).slice(0, 300)}`);
   const data = await response.json();
   gdrive.fileId = data.id || "";
 }
@@ -188,7 +188,7 @@ async function restoreFromDriveIfEmpty() {
     const response = await fetch(`${GDRIVE_API_BASE}/drive/v3/files/${file.id}?alt=media&supportsAllDrives=true`, {
       headers: { Authorization: `Bearer ${token}` },
     });
-    if (!response.ok) throw new Error(`download failed (${response.status})`);
+    if (!response.ok) throw new Error(`download failed (${response.status}) ${(await response.text()).slice(0, 300)}`);
     const parsed = JSON.parse(await response.text());
     if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) throw new Error("backup is not an object");
     gdrive.fileId = file.id;
