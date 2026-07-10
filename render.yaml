@@ -12,3 +12,7 @@ services:
         sync: false
       - key: POS_PASSWORD
         sync: false
+      - key: GDRIVE_SERVICE_ACCOUNT
+        sync: false
+      - key: GDRIVE_FOLDER_ID
+        sync: false

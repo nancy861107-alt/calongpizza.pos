@@ -1,6 +1,7 @@
 const http = require("http");
 const fs = require("fs");
 const path = require("path");
+const crypto = require("crypto");
 
 const PORT = Number(process.env.PORT || 8090);
 const HOST = process.env.HOST || "0.0.0.0";
@@ -45,7 +46,160 @@ function writeDb(data) {
   const tempFile = `${DB_FILE}.tmp`;
   fs.writeFileSync(tempFile, JSON.stringify(data, null, 2));
   fs.renameSync(tempFile, DB_FILE);
+  scheduleDriveBackup();
 }
+
+// --- Google Drive backup -------------------------------------------------
+// The Render free-plan disk is wiped on every deploy/restart, so every write
+// is mirrored to a Google Drive folder and restored from there on boot.
+// Requires two env vars: GDRIVE_SERVICE_ACCOUNT (service-account key JSON,
+// raw or base64) and GDRIVE_FOLDER_ID (Drive folder shared with that account).
+
+const GDRIVE_FOLDER_ID = process.env.GDRIVE_FOLDER_ID || "";
+const GDRIVE_TOKEN_URL = process.env.GDRIVE_TOKEN_URL || "https://oauth2.googleapis.com/token";
+const GDRIVE_API_BASE = process.env.GDRIVE_API_BASE || "https://www.googleapis.com";
+const GDRIVE_BACKUP_NAME = process.env.GDRIVE_BACKUP_NAME || "calong-pos-backup.json";
+
+function parseServiceAccount() {
+  const raw = (process.env.GDRIVE_SERVICE_ACCOUNT || "").trim();
+  if (!raw) return null;
+  try {
+    const json = raw.startsWith("{") ? raw : Buffer.from(raw, "base64").toString("utf8");
+    const parsed = JSON.parse(json);
+    if (parsed.client_email && parsed.private_key) return parsed;
+    console.error("[gdrive] service account key is missing client_email/private_key");
+  } catch (error) {
+    console.error("[gdrive] GDRIVE_SERVICE_ACCOUNT is not valid JSON or base64 JSON");
+  }
+  return null;
+}
+
+const gdriveKey = parseServiceAccount();
+const gdriveEnabled = Boolean(GDRIVE_FOLDER_ID && gdriveKey);
+const gdrive = { token: "", tokenExpiresAt: 0, fileId: "", timer: null, lastBackupAt: "", lastError: "", restoredFrom: "" };
+
+async function gdriveAccessToken() {
+  const now = Math.floor(Date.now() / 1000);
+  if (gdrive.token && now < gdrive.tokenExpiresAt - 300) return gdrive.token;
+  const encode = (value) => Buffer.from(JSON.stringify(value)).toString("base64url");
+  const unsigned = `${encode({ alg: "RS256", typ: "JWT" })}.${encode({
+    iss: gdriveKey.client_email,
+    scope: "https://www.googleapis.com/auth/drive",
+    aud: GDRIVE_TOKEN_URL,
+    iat: now,
+    exp: now + 3600,
+  })}`;
+  const signature = crypto.createSign("RSA-SHA256").update(unsigned).sign(gdriveKey.private_key).toString("base64url");
+  const response = await fetch(GDRIVE_TOKEN_URL, {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: new URLSearchParams({
+      grant_type: "urn:ietf:params:oauth:grant-type:jwt-bearer",
+      assertion: `${unsigned}.${signature}`,
+    }),
+  });
+  if (!response.ok) throw new Error(`token request failed (${response.status})`);
+  const data = await response.json();
+  gdrive.token = data.access_token;
+  gdrive.tokenExpiresAt = now + (Number(data.expires_in) || 3600);
+  return gdrive.token;
+}
+
+async function gdriveFindBackupFile(token) {
+  const query = encodeURIComponent(`name = '${GDRIVE_BACKUP_NAME}' and '${GDRIVE_FOLDER_ID}' in parents and trashed = false`);
+  const response = await fetch(
+    `${GDRIVE_API_BASE}/drive/v3/files?q=${query}&fields=files(id,name,modifiedTime)&pageSize=1&supportsAllDrives=true&includeItemsFromAllDrives=true`,
+    { headers: { Authorization: `Bearer ${token}` } },
+  );
+  if (!response.ok) throw new Error(`file search failed (${response.status})`);
+  const data = await response.json();
+  return (data.files || [])[0] || null;
+}
+
+async function gdriveUploadBackup(content) {
+  const token = await gdriveAccessToken();
+  if (!gdrive.fileId) {
+    const existing = await gdriveFindBackupFile(token);
+    if (existing) gdrive.fileId = existing.id;
+  }
+  if (gdrive.fileId) {
+    const response = await fetch(
+      `${GDRIVE_API_BASE}/upload/drive/v3/files/${gdrive.fileId}?uploadType=media&supportsAllDrives=true`,
+      { method: "PATCH", headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" }, body: content },
+    );
+    if (response.status === 404) {
+      gdrive.fileId = "";
+      return gdriveUploadBackup(content);
+    }
+    if (!response.ok) throw new Error(`file update failed (${response.status})`);
+    return;
+  }
+  const boundary = `calongpos${Date.now()}`;
+  const metadata = JSON.stringify({ name: GDRIVE_BACKUP_NAME, parents: [GDRIVE_FOLDER_ID] });
+  const body =
+    `--${boundary}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n${metadata}\r\n` +
+    `--${boundary}\r\nContent-Type: application/json\r\n\r\n${content}\r\n--${boundary}--`;
+  const response = await fetch(
+    `${GDRIVE_API_BASE}/upload/drive/v3/files?uploadType=multipart&fields=id&supportsAllDrives=true`,
+    { method: "POST", headers: { Authorization: `Bearer ${token}`, "Content-Type": `multipart/related; boundary=${boundary}` }, body },
+  );
+  if (!response.ok) throw new Error(`file create failed (${response.status})`);
+  const data = await response.json();
+  gdrive.fileId = data.id || "";
+}
+
+function scheduleDriveBackup(delayMs = 5000) {
+  if (!gdriveEnabled) return;
+  if (gdrive.timer) clearTimeout(gdrive.timer);
+  gdrive.timer = setTimeout(async () => {
+    gdrive.timer = null;
+    try {
+      await gdriveUploadBackup(fs.readFileSync(DB_FILE, "utf8"));
+      gdrive.lastBackupAt = new Date().toISOString();
+      gdrive.lastError = "";
+    } catch (error) {
+      gdrive.lastError = error.message || String(error);
+      console.error("[gdrive] backup failed:", gdrive.lastError);
+      scheduleDriveBackup(60000);
+    }
+  }, delayMs);
+}
+
+async function restoreFromDriveIfEmpty() {
+  if (!gdriveEnabled) {
+    console.log("[gdrive] backup disabled (GDRIVE_SERVICE_ACCOUNT / GDRIVE_FOLDER_ID not set)");
+    return;
+  }
+  const db = readDb();
+  const hasData =
+    (Array.isArray(db["pos-sales"]) && db["pos-sales"].length > 0) ||
+    (Array.isArray(db["pos-products"]) && db["pos-products"].length > 0);
+  if (hasData) {
+    console.log("[gdrive] local data present, skipping restore");
+    return;
+  }
+  try {
+    const token = await gdriveAccessToken();
+    const file = await gdriveFindBackupFile(token);
+    if (!file) {
+      console.log("[gdrive] no backup found in folder, starting fresh");
+      return;
+    }
+    const response = await fetch(`${GDRIVE_API_BASE}/drive/v3/files/${file.id}?alt=media&supportsAllDrives=true`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (!response.ok) throw new Error(`download failed (${response.status})`);
+    const parsed = JSON.parse(await response.text());
+    if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) throw new Error("backup is not an object");
+    gdrive.fileId = file.id;
+    writeDb(parsed);
+    gdrive.restoredFrom = file.modifiedTime || "unknown";
+    console.log(`[gdrive] restored backup (last modified ${gdrive.restoredFrom})`);
+  } catch (error) {
+    console.error("[gdrive] restore failed:", error.message || error);
+  }
+}
+// --- end Google Drive backup ---------------------------------------------
 
 function saleDateKey(sale) {
   try {
@@ -667,6 +821,16 @@ async function handleApi(request, response, url) {
     return;
   }
 
+  if (url.pathname === "/api/backup-status") {
+    sendJson(response, 200, {
+      enabled: gdriveEnabled,
+      lastBackupAt: gdrive.lastBackupAt,
+      restoredFrom: gdrive.restoredFrom,
+      lastError: gdrive.lastError,
+    });
+    return;
+  }
+
   if (url.pathname === "/api/export-report" && request.method === "GET") {
     sendReportXlsx(response, url);
     return;
@@ -734,6 +898,8 @@ const server = http.createServer(async (request, response) => {
   }
 });
 
-server.listen(PORT, HOST, () => {
-  console.log(`Calong POS cloud server: http://${HOST}:${PORT}`);
+restoreFromDriveIfEmpty().finally(() => {
+  server.listen(PORT, HOST, () => {
+    console.log(`Calong POS cloud server: http://${HOST}:${PORT}`);
+  });
 });
