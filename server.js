@@ -824,6 +824,8 @@ async function handleApi(request, response, url) {
   if (url.pathname === "/api/backup-status") {
     sendJson(response, 200, {
       enabled: gdriveEnabled,
+      serviceAccount: gdriveKey ? gdriveKey.client_email : "",
+      folderId: GDRIVE_FOLDER_ID,
       lastBackupAt: gdrive.lastBackupAt,
       restoredFrom: gdrive.restoredFrom,
       lastError: gdrive.lastError,
