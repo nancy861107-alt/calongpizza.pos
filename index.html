@@ -16,7 +16,7 @@
     <link rel="apple-touch-icon" sizes="512x512" href="./icon-512.png" />
     <link rel="icon" href="./app-icon.svg" type="image/svg+xml" />
     <link rel="icon" href="./icon-192.png" type="image/png" />
-    <link rel="stylesheet" href="./styles.css?v=20260710-wider-cart2" />
+    <link rel="stylesheet" href="./styles.css?v=20260710-month-sheet" />
   </head>
   <body data-view="checkout">
     <div class="app-shell">
@@ -175,6 +175,23 @@
               </thead>
               <tbody id="monthDailyTable"></tbody>
             </table>
+          </section>
+          <section class="month-sheet" id="monthSheet" hidden>
+            <div class="month-category-grid" id="monthCategoryGrid"></div>
+            <section class="sheet-box sheet-table-box month-hourly-card">
+              <h4><span>時段營收(全月)</span></h4>
+              <table class="hourly-table">
+                <thead>
+                  <tr>
+                    <th>時段</th>
+                    <th>金額</th>
+                    <th>時段</th>
+                    <th>金額</th>
+                  </tr>
+                </thead>
+                <tbody id="monthHourlyTable"></tbody>
+              </table>
+            </section>
           </section>
           <section class="daily-sheet" id="dailySheet">
             <div class="daily-sheet-heading">
@@ -428,7 +445,7 @@
       <img src="./calong-logo.jpg" alt="" />
     </button>
 
-    <script src="./keypad-helpers.js?v=20260710-wider-cart2"></script>
-    <script src="./app.js?v=20260710-wider-cart2"></script>
+    <script src="./keypad-helpers.js?v=20260710-month-sheet"></script>
+    <script src="./app.js?v=20260710-month-sheet"></script>
   </body>
 </html>

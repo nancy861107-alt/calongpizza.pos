@@ -158,6 +158,9 @@ const els = {
   dailySheet: document.querySelector("#dailySheet"),
   monthDailyBreakdown: document.querySelector("#monthDailyBreakdown"),
   monthDailyTable: document.querySelector("#monthDailyTable"),
+  monthSheet: document.querySelector("#monthSheet"),
+  monthCategoryGrid: document.querySelector("#monthCategoryGrid"),
+  monthHourlyTable: document.querySelector("#monthHourlyTable"),
   dailySheetDate: document.querySelector("#dailySheetDate"),
   exportReportButton: document.querySelector("#exportReportButton"),
   dailyProductSections: document.querySelector("#dailyProductSections"),
@@ -809,10 +812,16 @@ function renderSales() {
   els.reportMonthInput.hidden = state.reportMode !== "month";
   els.dailySheet.hidden = state.reportMode !== "day";
   els.monthDailyBreakdown.hidden = state.reportMode !== "month";
+  els.monthSheet.hidden = state.reportMode !== "month";
   els.reportButtons.forEach((button) => button.classList.toggle("active", button.dataset.report === state.reportMode));
   renderMonthDailyBreakdown(sales);
+  renderMonthSheet(sales);
   renderDailySheet(sales);
 
+  els.paymentReportTable.innerHTML = hourlyRowsHtml(sales);
+}
+
+function hourlyRowsHtml(sales) {
   const timeRows = [
     [10, 16],
     [11, 17],
@@ -821,20 +830,52 @@ function renderSales() {
     [14, 20],
     [15, 21],
   ];
-  els.paymentReportTable.innerHTML =
-    timeRows
-      .map(
-        ([leftHour, rightHour]) => `
-          <tr>
-            <td>${leftHour}~${leftHour + 1}</td>
-            <td>${money(hourlyRevenue(sales, leftHour))}</td>
-            <td>${rightHour === 21 ? "21" : `${rightHour}~${rightHour + 1}`}</td>
-            <td>${money(hourlyRevenue(sales, rightHour))}</td>
-          </tr>
-        `,
-      )
-      .join("");
+  return timeRows
+    .map(
+      ([leftHour, rightHour]) => `
+        <tr>
+          <td>${leftHour}~${leftHour + 1}</td>
+          <td>${money(hourlyRevenue(sales, leftHour))}</td>
+          <td>${rightHour === 21 ? "21" : `${rightHour}~${rightHour + 1}`}</td>
+          <td>${money(hourlyRevenue(sales, rightHour))}</td>
+        </tr>
+      `,
+    )
+    .join("");
+}
 
+// Month mode: the same per-category product tables as the daily sheet, but
+// totalled over every sale in the selected month.
+function renderMonthSheet(sales) {
+  if (state.reportMode !== "month") return;
+
+  els.monthCategoryGrid.innerHTML = "";
+  categories().forEach((categoryName) => {
+    const section = document.createElement("section");
+    section.className = "sheet-box month-category-card";
+    section.innerHTML = `
+      <h4><span>${categoryName}</span></h4>
+      <table class="sheet-mini-table">
+        <colgroup>
+          <col class="product-col" />
+          <col class="quantity-col" />
+          <col class="amount-col" />
+        </colgroup>
+        <thead>
+          <tr>
+            <th>商品</th>
+            <th>數量</th>
+            <th>金額</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    `;
+    renderCategorySalesRows(categoryName, section.querySelector("tbody"), sales);
+    els.monthCategoryGrid.append(section);
+  });
+
+  els.monthHourlyTable.innerHTML = hourlyRowsHtml(sales);
 }
 
 function renderMonthDailyBreakdown(sales) {

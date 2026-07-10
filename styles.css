@@ -1010,6 +1010,23 @@ select {
   margin-bottom: 16px;
 }
 
+.month-sheet {
+  display: grid;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.month-category-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  align-items: start;
+  gap: 16px;
+}
+
+.month-sheet .sheet-box {
+  margin-bottom: 0;
+}
+
 .month-daily-table table {
   min-width: 0;
 }
