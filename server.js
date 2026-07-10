@@ -42,7 +42,33 @@ function readDb() {
 
 function writeDb(data) {
   ensureDb();
-  fs.writeFileSync(DB_FILE, JSON.stringify(data, null, 2));
+  const tempFile = `${DB_FILE}.tmp`;
+  fs.writeFileSync(tempFile, JSON.stringify(data, null, 2));
+  fs.renameSync(tempFile, DB_FILE);
+}
+
+function saleDateKey(sale) {
+  try {
+    return dateParts(sale?.createdAt).date;
+  } catch {
+    return "";
+  }
+}
+
+// Clients only hold the current business day's sales, so a plain overwrite of
+// "pos-sales" would erase every other day's history. Replace only the scoped
+// day (or the days present in the payload) and keep the rest.
+function mergeSales(existing, incoming, scopeDate) {
+  const existingSales = Array.isArray(existing) ? existing : [];
+  const incomingSales = Array.isArray(incoming) ? incoming : [];
+  const incomingIds = new Set(incomingSales.map((sale) => sale?.id).filter(Boolean));
+  const replacedDates = new Set(incomingSales.map(saleDateKey));
+  if (scopeDate) replacedDates.add(scopeDate);
+  const preserved = existingSales.filter((sale) => {
+    if (incomingIds.has(sale?.id)) return false;
+    return !replacedDates.has(saleDateKey(sale));
+  });
+  return [...incomingSales, ...preserved];
 }
 
 function readBody(request) {
@@ -542,17 +568,25 @@ function loginPage(message = "") {
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>卡隆收銀系統登入</title>
   <style>
-    :root { color-scheme: light; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
-    body { min-height: 100vh; margin: 0; display: grid; place-items: center; background: #f3f5f1; color: #17211b; }
-    main { width: min(420px, calc(100vw - 32px)); padding: 28px; border: 1px solid #d9dfd5; border-radius: 12px; background: white; box-shadow: 0 18px 45px rgba(23, 33, 27, .1); }
-    img { display: block; width: 120px; margin: 0 auto 18px; }
-    h1 { margin: 0 0 8px; font-size: 24px; text-align: center; }
-    p { margin: 0 0 18px; color: #637069; text-align: center; }
+    :root { color-scheme: light; font-family: -apple-system, BlinkMacSystemFont, "PingFang TC", "Noto Sans TC", "Segoe UI", sans-serif; }
+    body { min-height: 100vh; margin: 0; display: grid; place-items: center; color: #18212a;
+      background: radial-gradient(900px 420px at 85% -10%, rgba(29, 111, 184, .1), transparent 60%),
+        radial-gradient(700px 360px at -10% 108%, rgba(217, 119, 6, .07), transparent 55%), #eff2f5; }
+    main { width: min(420px, calc(100vw - 32px)); padding: 32px 28px; border: 1px solid #e1e6eb; border-radius: 18px; background: white;
+      box-shadow: 0 1px 2px rgba(18, 28, 38, .05), 0 16px 40px rgba(18, 28, 38, .1); }
+    img { display: block; width: 108px; margin: 0 auto 18px; border-radius: 20px; box-shadow: 0 8px 24px rgba(18, 28, 38, .14); }
+    h1 { margin: 0 0 8px; font-size: 24px; font-weight: 900; text-align: center; letter-spacing: .02em; }
+    p { margin: 0 0 20px; color: #67737e; text-align: center; }
     form { display: grid; gap: 14px; }
-    label { display: grid; gap: 6px; font-weight: 800; }
-    input { height: 46px; padding: 0 12px; border: 1px solid #d9dfd5; border-radius: 8px; font: inherit; }
-    button { height: 48px; border: 0; border-radius: 8px; background: #0f7b63; color: white; font: inherit; font-weight: 900; }
-    .error { margin-bottom: 14px; padding: 10px 12px; border-radius: 8px; background: #fff1f0; color: #b42318; font-weight: 800; text-align: center; }
+    label { display: grid; gap: 6px; color: #67737e; font-size: 13px; font-weight: 800; letter-spacing: .05em; }
+    input { height: 48px; padding: 0 14px; border: 1px solid #d2d9e0; border-radius: 10px; font: inherit; color: #18212a;
+      transition: border-color .16s ease, box-shadow .16s ease; }
+    input:focus { border-color: #1d6fb8; box-shadow: 0 0 0 3px rgba(29, 111, 184, .14); outline: none; }
+    button { height: 50px; margin-top: 4px; border: 0; border-radius: 12px; color: white; font: inherit; font-weight: 900; letter-spacing: .14em;
+      cursor: pointer; background: linear-gradient(135deg, #1f7cc9, #12507f);
+      box-shadow: 0 6px 16px rgba(18, 80, 127, .3), inset 0 1px 0 rgba(255, 255, 255, .16); transition: transform .12s ease; }
+    button:active { transform: scale(.97); }
+    .error { margin-bottom: 14px; padding: 10px 12px; border-radius: 10px; background: #fdf1ef; color: #b42318; font-weight: 800; text-align: center; }
   </style>
 </head>
 <body>
@@ -648,7 +682,12 @@ async function handleApi(request, response, url) {
     const body = await readBody(request);
     const parsed = body ? JSON.parse(body) : null;
     const db = readDb();
-    db[key] = parsed.value;
+    if (key === "pos-sales") {
+      const scopeDate = typeof parsed?.scopeDate === "string" ? parsed.scopeDate : "";
+      db[key] = mergeSales(db[key], parsed?.value, scopeDate);
+    } else {
+      db[key] = parsed.value;
+    }
     writeDb(db);
     sendJson(response, 200, { ok: true });
     return;
