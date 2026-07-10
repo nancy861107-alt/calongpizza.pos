@@ -1,10 +1,10 @@
-const CACHE_NAME = "pos-system-20260706-larger-category-tabs";
+const CACHE_NAME = "pos-system-20260709-sidebar-anim";
 const ASSETS = [
   "./",
   "./index.html",
-  "./styles.css?v=20260706-larger-category-tabs",
-  "./keypad-helpers.js?v=20260706-larger-category-tabs",
-  "./app.js?v=20260706-larger-category-tabs",
+  "./styles.css?v=20260709-sidebar-anim",
+  "./keypad-helpers.js?v=20260709-sidebar-anim",
+  "./app.js?v=20260709-sidebar-anim",
   "./manifest.json",
   "./manifest.webmanifest",
   "./app-icon.svg",

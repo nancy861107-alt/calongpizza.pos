@@ -210,26 +210,30 @@ function syncStateFromStorage() {
   state.sales = load("pos-sales", []);
   state.settings = { ...defaultSettings, ...load("pos-settings", defaultSettings) };
   normalizeProducts();
-  return purgeExpiredSales({ saveCloud: false });
+  return purgeExpiredSales();
 }
 
-function purgeExpiredSales(options = {}) {
+// Trims the on-device list to today's sales only. Never pushed to the cloud:
+// the server keeps the full history for reports.
+function purgeExpiredSales() {
   const currentDate = todayKey();
   const salesToday = state.sales.filter((sale) => dateKeyFrom(sale.createdAt) === currentDate);
   if (salesToday.length === state.sales.length) return false;
   state.sales = salesToday;
   localStorage.setItem("pos-sales", JSON.stringify(state.sales));
-  if (options.saveCloud !== false) saveCloudValue("pos-sales", state.sales);
   return true;
 }
 
 async function saveCloudValue(key, value) {
   if (!cloudSync.enabled || !cloudSync.ready || cloudSync.syncing) return false;
   try {
+    // The local sales list only covers today, so tell the server which day it
+    // replaces; the server keeps every other day's history intact.
+    const payload = key === "pos-sales" ? { value, scopeDate: todayKey() } : { value };
     const response = await fetch(`/api/storage/${encodeURIComponent(key)}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ value }),
+      body: JSON.stringify(payload),
     });
     if (response.status === 401) {
       window.location.href = "/login";
@@ -260,9 +264,8 @@ async function syncFromCloud(options = {}) {
       localStorage.setItem(key, JSON.stringify(value));
     });
     cloudSync.ready = true;
-    const didPurgeExpiredSales = syncStateFromStorage();
+    syncStateFromStorage();
     if (options.render !== false) renderAll();
-    if (didPurgeExpiredSales) saveCloudValue("pos-sales", state.sales);
   } catch {
     cloudSync.ready = false;
   } finally {
@@ -2138,12 +2141,30 @@ function checkDailySalesExpiration() {
   renderTransactionDetails();
 }
 
+const SIDEBAR_COLLAPSED_KEY = "pos-sidebar-collapsed";
+
+function setSidebarCollapsed(collapsed) {
+  document.body.classList.toggle("sidebar-collapsed", collapsed);
+  try {
+    localStorage.setItem(SIDEBAR_COLLAPSED_KEY, collapsed ? "1" : "0");
+  } catch {
+    // Collapse state is a device preference; ignore storage failures.
+  }
+}
+
+function initSidebarToggle() {
+  document.querySelector("#sidebarCollapseButton")?.addEventListener("click", () => setSidebarCollapsed(true));
+  document.querySelector("#sidebarExpandButton")?.addEventListener("click", () => setSidebarCollapsed(false));
+  if (localStorage.getItem(SIDEBAR_COLLAPSED_KEY) === "1") setSidebarCollapsed(true);
+}
+
 els.reportDateInput.value = todayKey();
 els.reportMonthInput.value = monthKey();
 normalizeProducts();
 purgeExpiredSales();
 preventAppZoomGestures();
 initEvents();
+initSidebarToggle();
 renderAll();
 syncFromCloud();
 tickClock();

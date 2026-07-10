@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
-    <meta name="theme-color" content="#15241d" />
+    <meta name="theme-color" content="#16222f" />
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-title" content="卡隆POS" />
@@ -16,13 +16,15 @@
     <link rel="apple-touch-icon" sizes="512x512" href="./icon-512.png" />
     <link rel="icon" href="./app-icon.svg" type="image/svg+xml" />
     <link rel="icon" href="./icon-192.png" type="image/png" />
-    <link rel="stylesheet" href="./styles.css?v=20260707-touch-admin-sort" />
+    <link rel="stylesheet" href="./styles.css?v=20260709-sidebar-anim" />
   </head>
   <body data-view="checkout">
     <div class="app-shell">
       <aside class="sidebar">
         <div class="brand">
-          <img class="brand-mark" src="./calong-logo.jpg" alt="卡隆" />
+          <button class="brand-toggle" type="button" id="sidebarCollapseButton" title="收合選單">
+            <img class="brand-mark" src="./calong-logo.jpg" alt="卡隆" />
+          </button>
           <div>
             <h1>卡隆收銀</h1>
             <p>今日櫃台</p>
@@ -31,19 +33,19 @@
 
         <nav class="nav" aria-label="主要功能">
           <button class="nav-button active" type="button" data-view="checkout" title="收銀">
-            <span class="icon">▦</span>
+            <span class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="7.5" height="7.5" rx="1.6"/><rect x="13.5" y="4" width="7.5" height="7.5" rx="1.6"/><rect x="3" y="14.5" width="7.5" height="7.5" rx="1.6"/><rect x="13.5" y="14.5" width="7.5" height="7.5" rx="1.6"/></svg></span>
             <span>收銀</span>
           </button>
           <button class="nav-button" type="button" data-view="sales" title="銷售紀錄">
-            <span class="icon">≡</span>
+            <span class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20V10"/><path d="M10 20V4"/><path d="M16 20v-7"/><path d="M22 20H2"/></svg></span>
             <span>銷售</span>
           </button>
           <button class="nav-button" type="button" data-view="details" title="交易明細">
-            <span class="icon">☷</span>
+            <span class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3h12v18l-2.4-1.6L13.2 21l-2.4-1.6L8.4 21 6 19.4Z"/><path d="M9.5 8h5"/><path d="M9.5 12h5"/></svg></span>
             <span>明細</span>
           </button>
           <button class="nav-button" type="button" data-view="products" title="商品管理">
-            <span class="icon">＋</span>
+            <span class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3 4 7v10l8 4 8-4V7l-8-4Z"/><path d="M4 7l8 4 8-4"/><path d="M12 11v10"/></svg></span>
             <span>商品</span>
           </button>
         </nav>
@@ -405,7 +407,11 @@
       </main>
     </div>
 
-    <script src="./keypad-helpers.js?v=20260707-share-report-drive"></script>
-    <script src="./app.js?v=20260707-share-report-drive"></script>
+    <button class="sidebar-fab" type="button" id="sidebarExpandButton" title="展開選單" aria-label="展開選單">
+      <img src="./calong-logo.jpg" alt="" />
+    </button>
+
+    <script src="./keypad-helpers.js?v=20260709-sidebar-anim"></script>
+    <script src="./app.js?v=20260709-sidebar-anim"></script>
   </body>
 </html>
