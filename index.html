@@ -16,7 +16,7 @@
     <link rel="apple-touch-icon" sizes="512x512" href="./icon-512.png" />
     <link rel="icon" href="./app-icon.svg" type="image/svg+xml" />
     <link rel="icon" href="./icon-192.png" type="image/png" />
-    <link rel="stylesheet" href="./styles.css?v=20260709-sidebar-anim" />
+    <link rel="stylesheet" href="./styles.css?v=20260710-month-daily" />
   </head>
   <body data-view="checkout">
     <div class="app-shell">
@@ -159,6 +159,23 @@
               <strong id="reportItems">$0</strong>
             </div>
           </div>
+          <section class="table-wrap month-daily-table" id="monthDailyBreakdown" hidden>
+            <div class="table-heading">
+              <h3>每日營收</h3>
+            </div>
+            <table>
+              <thead>
+                <tr>
+                  <th>日期</th>
+                  <th>來客數</th>
+                  <th>銷售總金額</th>
+                  <th>折扣</th>
+                  <th>銷貨淨額</th>
+                </tr>
+              </thead>
+              <tbody id="monthDailyTable"></tbody>
+            </table>
+          </section>
           <section class="daily-sheet" id="dailySheet">
             <div class="daily-sheet-heading">
               <h3>日結單</h3>
@@ -411,7 +428,7 @@
       <img src="./calong-logo.jpg" alt="" />
     </button>
 
-    <script src="./keypad-helpers.js?v=20260709-sidebar-anim"></script>
-    <script src="./app.js?v=20260709-sidebar-anim"></script>
+    <script src="./keypad-helpers.js?v=20260710-month-daily"></script>
+    <script src="./app.js?v=20260710-month-daily"></script>
   </body>
 </html>

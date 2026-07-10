@@ -52,6 +52,7 @@ const state = {
   categories: load("pos-categories", defaultCategories),
   cart: [],
   sales: load("pos-sales", []),
+  historySales: [],
   settings: load("pos-settings", defaultSettings),
   payment: "cash",
   reportMode: "day",
@@ -155,6 +156,8 @@ const els = {
   averageOrder: document.querySelector("#averageOrder"),
   reportItems: document.querySelector("#reportItems"),
   dailySheet: document.querySelector("#dailySheet"),
+  monthDailyBreakdown: document.querySelector("#monthDailyBreakdown"),
+  monthDailyTable: document.querySelector("#monthDailyTable"),
   dailySheetDate: document.querySelector("#dailySheetDate"),
   exportReportButton: document.querySelector("#exportReportButton"),
   dailyProductSections: document.querySelector("#dailyProductSections"),
@@ -260,6 +263,9 @@ async function syncFromCloud(options = {}) {
     if (!response.ok) throw new Error("Cloud storage unavailable");
     const data = await response.json();
     shouldSeedCloud = Object.keys(data).length === 0;
+    // Keep the untrimmed cloud history in memory: reports need every day,
+    // while state.sales/localStorage only retain today.
+    if (Array.isArray(data["pos-sales"])) state.historySales = data["pos-sales"];
     Object.entries(data).forEach(([key, value]) => {
       localStorage.setItem(key, JSON.stringify(value));
     });
@@ -668,14 +674,23 @@ function paymentLabel(method) {
   return "現金";
 }
 
+// Full sales list for reports: cloud history for past days plus the local
+// list for today (which reflects new checkouts and voids instantly).
+function reportingSales() {
+  const currentDate = todayKey();
+  const pastSales = state.historySales.filter((sale) => dateKeyFrom(sale.createdAt) !== currentDate);
+  return [...state.sales, ...pastSales];
+}
+
 function reportSales() {
+  const sales = reportingSales();
   if (state.reportMode === "month") {
     const selectedMonth = els.reportMonthInput.value || monthKey();
-    return state.sales.filter((sale) => monthKeyFrom(sale.createdAt) === selectedMonth);
+    return sales.filter((sale) => monthKeyFrom(sale.createdAt) === selectedMonth);
   }
 
   const selectedDate = els.reportDateInput.value || todayKey();
-  return state.sales.filter((sale) => dateKeyFrom(sale.createdAt) === selectedDate);
+  return sales.filter((sale) => dateKeyFrom(sale.createdAt) === selectedDate);
 }
 
 function selectedReportDate() {
@@ -793,7 +808,9 @@ function renderSales() {
   els.reportDateInput.hidden = state.reportMode !== "day";
   els.reportMonthInput.hidden = state.reportMode !== "month";
   els.dailySheet.hidden = state.reportMode !== "day";
+  els.monthDailyBreakdown.hidden = state.reportMode !== "month";
   els.reportButtons.forEach((button) => button.classList.toggle("active", button.dataset.report === state.reportMode));
+  renderMonthDailyBreakdown(sales);
   renderDailySheet(sales);
 
   const timeRows = [
@@ -818,6 +835,55 @@ function renderSales() {
       )
       .join("");
 
+}
+
+function renderMonthDailyBreakdown(sales) {
+  if (state.reportMode !== "month") return;
+
+  const byDate = new Map();
+  sales.forEach((sale) => {
+    const date = dateKeyFrom(sale.createdAt);
+    const summary = byDate.get(date) || { orders: 0, gross: 0, discount: 0, net: 0 };
+    summary.orders += 1;
+    summary.gross += sale.totals.subtotal || 0;
+    summary.discount += sale.totals.discount || 0;
+    summary.net += sale.totals.total || 0;
+    byDate.set(date, summary);
+  });
+
+  if (byDate.size === 0) {
+    els.monthDailyTable.innerHTML = `<tr><td colspan="5" class="empty-row">本月尚無銷售紀錄</td></tr>`;
+    return;
+  }
+
+  const total = { orders: 0, gross: 0, discount: 0, net: 0 };
+  const rows = [...byDate.entries()]
+    .sort(([leftDate], [rightDate]) => leftDate.localeCompare(rightDate))
+    .map(([date, summary]) => {
+      total.orders += summary.orders;
+      total.gross += summary.gross;
+      total.discount += summary.discount;
+      total.net += summary.net;
+      return `
+        <tr>
+          <td>${date}</td>
+          <td>${summary.orders}</td>
+          <td>${money(summary.gross)}</td>
+          <td>${money(summary.discount)}</td>
+          <td>${money(summary.net)}</td>
+        </tr>
+      `;
+    });
+  rows.push(`
+    <tr class="month-total-row">
+      <td>總計</td>
+      <td>${total.orders}</td>
+      <td>${money(total.gross)}</td>
+      <td>${money(total.discount)}</td>
+      <td>${money(total.net)}</td>
+    </tr>
+  `);
+  els.monthDailyTable.innerHTML = rows.join("");
 }
 
 function renderDailySheet(sales) {

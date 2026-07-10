@@ -29,6 +29,10 @@
   -webkit-tap-highlight-color: transparent;
 }
 
+[hidden] {
+  display: none !important;
+}
+
 html {
   touch-action: manipulation;
   -webkit-text-size-adjust: 100%;
@@ -999,6 +1003,42 @@ select {
   align-items: center;
   gap: 10px;
   margin-bottom: 14px;
+}
+
+.month-daily-table {
+  margin-bottom: 16px;
+}
+
+.month-daily-table table {
+  min-width: 0;
+}
+
+.month-daily-table th:not(:first-child),
+.month-daily-table td:not(:first-child) {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.month-daily-table td {
+  font-weight: 700;
+  vertical-align: middle;
+}
+
+.month-daily-table td:first-child {
+  color: var(--muted);
+}
+
+.month-daily-table .month-total-row td {
+  background: linear-gradient(180deg, #f7f9fb, #f1f4f8);
+  border-top: 2px solid var(--line-strong);
+  color: var(--ink);
+  font-weight: 900;
+}
+
+.month-daily-table .empty-row {
+  color: var(--muted);
+  text-align: center;
+  font-weight: 700;
 }
 
 .detail-toolbar {
