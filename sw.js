@@ -1,10 +1,10 @@
-const CACHE_NAME = "pos-system-20260713-logo-smaller";
+const CACHE_NAME = "pos-system-20260713-logo-70pct";
 const ASSETS = [
   "./",
   "./index.html",
-  "./styles.css?v=20260713-logo-smaller",
-  "./keypad-helpers.js?v=20260713-logo-smaller",
-  "./app.js?v=20260713-logo-smaller",
+  "./styles.css?v=20260713-logo-70pct",
+  "./keypad-helpers.js?v=20260713-logo-70pct",
+  "./app.js?v=20260713-logo-70pct",
   "./manifest.json",
   "./manifest.webmanifest",
   "./app-icon.svg",
