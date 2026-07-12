@@ -1,10 +1,10 @@
-const CACHE_NAME = "pos-system-20260711-bigger-product-name";
+const CACHE_NAME = "pos-system-20260713-logo-crop";
 const ASSETS = [
   "./",
   "./index.html",
-  "./styles.css?v=20260711-bigger-product-name",
-  "./keypad-helpers.js?v=20260711-bigger-product-name",
-  "./app.js?v=20260711-bigger-product-name",
+  "./styles.css?v=20260713-logo-crop",
+  "./keypad-helpers.js?v=20260713-logo-crop",
+  "./app.js?v=20260713-logo-crop",
   "./manifest.json",
   "./manifest.webmanifest",
   "./app-icon.svg",
