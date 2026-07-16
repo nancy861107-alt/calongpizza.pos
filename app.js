@@ -67,6 +67,7 @@ const cloudSync = {
   enabled: location.protocol === "http:" || location.protocol === "https:",
   ready: false,
   syncing: false,
+  lastSnapshot: "",
 };
 
 let checkoutAudioContext = null;
@@ -266,6 +267,14 @@ async function syncFromCloud(options = {}) {
     if (!response.ok) throw new Error("Cloud storage unavailable");
     const data = await response.json();
     shouldSeedCloud = Object.keys(data).length === 0;
+    // Rebuilding the whole UI destroys buttons mid-tap, so skip everything
+    // when the cloud data is identical to the previous sync.
+    const snapshot = JSON.stringify(data);
+    if (!shouldSeedCloud && snapshot === cloudSync.lastSnapshot) {
+      cloudSync.ready = true;
+      return;
+    }
+    cloudSync.lastSnapshot = snapshot;
     // Keep the untrimmed cloud history in memory: reports need every day,
     // while state.sales/localStorage only retain today.
     if (Array.isArray(data["pos-sales"])) state.historySales = data["pos-sales"];
