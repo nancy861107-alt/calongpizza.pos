@@ -91,6 +91,7 @@ async function webappRequest(action, content) {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ secret: GDRIVE_WEBAPP_SECRET, action, content }),
     redirect: "follow",
+    signal: AbortSignal.timeout(15000),
   });
   const text = await response.text();
   if (!response.ok) throw new Error(`webapp ${action} failed (${response.status}) ${text.slice(0, 300)}`);
@@ -123,6 +124,7 @@ async function gdriveAccessToken() {
       grant_type: "urn:ietf:params:oauth:grant-type:jwt-bearer",
       assertion: `${unsigned}.${signature}`,
     }),
+    signal: AbortSignal.timeout(15000),
   });
   if (!response.ok) throw new Error(`token request failed (${response.status}) ${(await response.text()).slice(0, 300)}`);
   const data = await response.json();
@@ -135,7 +137,7 @@ async function gdriveFindBackupFile(token) {
   const query = encodeURIComponent(`name = '${GDRIVE_BACKUP_NAME}' and '${GDRIVE_FOLDER_ID}' in parents and trashed = false`);
   const response = await fetch(
     `${GDRIVE_API_BASE}/drive/v3/files?q=${query}&fields=files(id,name,modifiedTime)&pageSize=1&supportsAllDrives=true&includeItemsFromAllDrives=true`,
-    { headers: { Authorization: `Bearer ${token}` } },
+    { headers: { Authorization: `Bearer ${token}` }, signal: AbortSignal.timeout(15000) },
   );
   if (!response.ok) throw new Error(`file search failed (${response.status}) ${(await response.text()).slice(0, 300)}`);
   const data = await response.json();
@@ -155,7 +157,7 @@ async function gdriveUploadBackup(content) {
   if (gdrive.fileId) {
     const response = await fetch(
       `${GDRIVE_API_BASE}/upload/drive/v3/files/${gdrive.fileId}?uploadType=media&supportsAllDrives=true`,
-      { method: "PATCH", headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" }, body: content },
+      { method: "PATCH", headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" }, body: content, signal: AbortSignal.timeout(20000) },
     );
     if (response.status === 404) {
       gdrive.fileId = "";
@@ -171,7 +173,7 @@ async function gdriveUploadBackup(content) {
     `--${boundary}\r\nContent-Type: application/json\r\n\r\n${content}\r\n--${boundary}--`;
   const response = await fetch(
     `${GDRIVE_API_BASE}/upload/drive/v3/files?uploadType=multipart&fields=id&supportsAllDrives=true`,
-    { method: "POST", headers: { Authorization: `Bearer ${token}`, "Content-Type": `multipart/related; boundary=${boundary}` }, body },
+    { method: "POST", headers: { Authorization: `Bearer ${token}`, "Content-Type": `multipart/related; boundary=${boundary}` }, body, signal: AbortSignal.timeout(20000) },
   );
   if (!response.ok) throw new Error(`file create failed (${response.status}) ${(await response.text()).slice(0, 300)}`);
   const data = await response.json();
@@ -228,6 +230,7 @@ async function restoreFromDriveIfEmpty() {
       }
       const response = await fetch(`${GDRIVE_API_BASE}/drive/v3/files/${file.id}?alt=media&supportsAllDrives=true`, {
         headers: { Authorization: `Bearer ${token}` },
+        signal: AbortSignal.timeout(20000),
       });
       if (!response.ok) throw new Error(`download failed (${response.status}) ${(await response.text()).slice(0, 300)}`);
       content = await response.text();
