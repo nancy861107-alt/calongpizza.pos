@@ -387,9 +387,9 @@ function renderProducts() {
     button.className = "product-card";
     button.type = "button";
     button.innerHTML = `
-      <span class="product-color" style="background:${product.color}"></span>
-      <span class="product-name">${product.name}</span>
-      <span class="product-meta">${product.category}</span>
+      <span class="product-color" style="background:${escapeHtml(product.color)}"></span>
+      <span class="product-name">${escapeHtml(product.name)}</span>
+      <span class="product-meta">${escapeHtml(product.category)}</span>
       <span class="product-price">${money(product.price)}</span>
     `;
     button.addEventListener("click", () => addToCart(product.id));
@@ -509,7 +509,7 @@ function renderCart() {
       row.className = `cart-item${isEditingQuantity ? " editing-quantity" : ""}`;
       row.innerHTML = `
         <div>
-          <strong>${item.name}</strong>
+          <strong>${escapeHtml(item.name)}</strong>
           <span class="product-meta">${money(item.price)} × ${item.quantity}</span>
         </div>
         <div class="cart-controls">
@@ -863,7 +863,7 @@ function renderMonthSheet(sales) {
     const section = document.createElement("section");
     section.className = "sheet-box month-category-card";
     section.innerHTML = `
-      <h4><span>${categoryName}</span></h4>
+      <h4><span>${escapeHtml(categoryName)}</span></h4>
       <table class="sheet-mini-table">
         <colgroup>
           <col class="product-col" />
@@ -977,7 +977,7 @@ function renderDailyProductSections(sales) {
     section.setAttribute("draggable", "false");
     section.dataset.categoryId = category ? category.id : "";
     section.innerHTML = `
-      <h4><span class="drag-handle sheet-drag-handle" title="拖曳排序">☰</span><span>${categoryName}</span></h4>
+      <h4><span class="drag-handle sheet-drag-handle" title="拖曳排序">☰</span><span>${escapeHtml(categoryName)}</span></h4>
       <table class="sheet-mini-table">
         <colgroup>
           <col class="product-col" />
@@ -1003,10 +1003,10 @@ function renderCategorySalesRows(categoryName, tableBody, sales) {
   const rows = dailyCategoryRows(categoryName, sales);
   tableBody.innerHTML = rows
     .map((row) => {
-      if (row.empty) return `<tr><td colspan="3">商品後台尚無${categoryName}品項</td></tr>`;
+      if (row.empty) return `<tr><td colspan="3">商品後台尚無${escapeHtml(categoryName)}品項</td></tr>`;
       return `
         <tr class="${row.total ? "daily-total-row" : ""}">
-          <td>${row.name}</td>
+          <td>${escapeHtml(row.name)}</td>
           <td>${row.quantity}</td>
           <td>${money(row.amount)}</td>
         </tr>
@@ -1491,7 +1491,7 @@ function renderTransactionDetails() {
     sales
       .map((sale) => {
         const saleItemCount = sale.items.reduce((sum, item) => sum + item.quantity, 0);
-        const itemText = sale.items.map((item) => `${item.name} × ${item.quantity}`).join("、");
+        const itemText = sale.items.map((item) => `${escapeHtml(item.name)} × ${item.quantity}`).join("、");
         return `
           <tr>
             <td>${new Date(sale.createdAt).toLocaleString("zh-TW")}</td>
@@ -1564,7 +1564,7 @@ function renderCategoriesTable() {
           <article class="admin-category-card" draggable="true" data-category-id="${category.id}">
             <div class="drag-handle" title="拖曳排序">☰</div>
             <div class="admin-product-main">
-              <strong>${category.name}</strong>
+              <strong>${escapeHtml(category.name)}</strong>
               <span>${productCount} 項品項</span>
             </div>
             <div class="row-actions">
@@ -1685,7 +1685,7 @@ function renderProductsTable() {
       card.innerHTML = `
         <div class="drag-handle" title="拖曳排序">☰</div>
         <div class="admin-product-main">
-          <strong>${product.name}</strong>
+          <strong>${escapeHtml(product.name)}</strong>
           <span>${money(product.price)}</span>
         </div>
         <div class="row-actions">

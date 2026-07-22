@@ -734,8 +734,38 @@ function sendReportXlsx(response, url) {
   response.end(body);
 }
 
+// Session value is a one-way digest, not the credentials: a stolen cookie can
+// replay the session but cannot be decoded back into the password.
+const AUTH_SALT = process.env.POS_SESSION_SALT || `${AUTH_USER}:${AUTH_PASSWORD}:calong-pos`;
+
 function authToken() {
-  return Buffer.from(`${AUTH_USER}:${AUTH_PASSWORD}`).toString("base64url");
+  return crypto.createHash("sha256").update(`${AUTH_SALT}|${AUTH_USER}|${AUTH_PASSWORD}`).digest("base64url");
+}
+
+function safeEqual(left, right) {
+  const a = Buffer.from(String(left));
+  const b = Buffer.from(String(right));
+  if (a.length !== b.length) return false;
+  return crypto.timingSafeEqual(a, b);
+}
+
+function isHttps(request) {
+  return (request.headers["x-forwarded-proto"] || "").split(",")[0].trim() === "https";
+}
+
+// Applied to every response: block framing/sniffing and keep the page from
+// loading scripts or connecting anywhere except its own origin.
+const SECURITY_HEADERS = {
+  "X-Content-Type-Options": "nosniff",
+  "X-Frame-Options": "DENY",
+  "Referrer-Policy": "same-origin",
+  "Strict-Transport-Security": "max-age=31536000",
+  "Content-Security-Policy":
+    "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; media-src 'self'; connect-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'",
+};
+
+function applySecurityHeaders(response) {
+  for (const [name, value] of Object.entries(SECURITY_HEADERS)) response.setHeader(name, value);
 }
 
 function parseCookies(request) {
@@ -754,11 +784,42 @@ function parseCookies(request) {
 function isAuthorized(request) {
   if (!AUTH_USER || !AUTH_PASSWORD) return true;
   const cookies = parseCookies(request);
-  if (cookies[AUTH_COOKIE] === authToken()) return true;
+  if (cookies[AUTH_COOKIE] && safeEqual(cookies[AUTH_COOKIE], authToken())) return true;
   const header = request.headers.authorization || "";
   if (!header.startsWith("Basic ")) return false;
   const decoded = Buffer.from(header.slice(6), "base64").toString("utf8");
-  return decoded === `${AUTH_USER}:${AUTH_PASSWORD}`;
+  return safeEqual(decoded, `${AUTH_USER}:${AUTH_PASSWORD}`);
+}
+
+// Throttle login attempts per client address so the password cannot be
+// brute-forced through the public form.
+const loginAttempts = new Map();
+const LOGIN_MAX_ATTEMPTS = 8;
+const LOGIN_WINDOW_MS = 15 * 60 * 1000;
+
+function clientKey(request) {
+  const forwarded = (request.headers["x-forwarded-for"] || "").split(",")[0].trim();
+  return forwarded || request.socket.remoteAddress || "unknown";
+}
+
+function loginBlocked(request) {
+  const entry = loginAttempts.get(clientKey(request));
+  if (!entry) return false;
+  if (Date.now() - entry.first > LOGIN_WINDOW_MS) {
+    loginAttempts.delete(clientKey(request));
+    return false;
+  }
+  return entry.count >= LOGIN_MAX_ATTEMPTS;
+}
+
+function recordLoginFailure(request) {
+  const key = clientKey(request);
+  const entry = loginAttempts.get(key);
+  if (!entry || Date.now() - entry.first > LOGIN_WINDOW_MS) {
+    loginAttempts.set(key, { count: 1, first: Date.now() });
+    return;
+  }
+  entry.count += 1;
 }
 
 function loginPage(message = "") {
@@ -837,17 +898,28 @@ async function handleLogin(request, response) {
     return;
   }
 
+  if (loginBlocked(request)) {
+    response.writeHead(429, { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "no-store" });
+    response.end(loginPage("嘗試次數過多，請 15 分鐘後再試"));
+    return;
+  }
+
   const body = await readBody(request);
   const form = new URLSearchParams(body);
-  if (form.get("username") === AUTH_USER && form.get("password") === AUTH_PASSWORD) {
+  const userOk = safeEqual(form.get("username") || "", AUTH_USER);
+  const passOk = safeEqual(form.get("password") || "", AUTH_PASSWORD);
+  if (userOk && passOk) {
+    loginAttempts.delete(clientKey(request));
+    const secure = isHttps(request) ? " Secure;" : "";
     response.writeHead(302, {
       Location: "/",
-      "Set-Cookie": `${AUTH_COOKIE}=${encodeURIComponent(authToken())}; Path=/; HttpOnly; SameSite=Lax; Max-Age=2592000`,
+      "Set-Cookie": `${AUTH_COOKIE}=${encodeURIComponent(authToken())}; Path=/; HttpOnly;${secure} SameSite=Lax; Max-Age=2592000`,
       "Cache-Control": "no-store",
     });
     response.end();
     return;
   }
+  recordLoginFailure(request);
   response.writeHead(401, {
     "Content-Type": "text/html; charset=utf-8",
     "Cache-Control": "no-store",
@@ -927,6 +999,7 @@ function handleStatic(request, response, url) {
 
 const server = http.createServer(async (request, response) => {
   try {
+    applySecurityHeaders(response);
     const url = new URL(request.url, `http://${request.headers.host}`);
     if (url.pathname === "/login") {
       await handleLogin(request, response);
@@ -944,7 +1017,8 @@ const server = http.createServer(async (request, response) => {
     }
     handleStatic(request, response, url);
   } catch (error) {
-    sendJson(response, 500, { error: error.message || "Server error" });
+    console.error("[server]", error);
+    sendJson(response, 500, { error: "Server error" });
   }
 });
 

@@ -1,10 +1,10 @@
-const CACHE_NAME = "pos-system-20260713-cleanup-fast";
+const CACHE_NAME = "pos-system-20260722-security";
 const ASSETS = [
   "./",
   "./index.html",
-  "./styles.css?v=20260713-cleanup-fast",
-  "./keypad-helpers.js?v=20260713-cleanup-fast",
-  "./app.js?v=20260713-cleanup-fast",
+  "./styles.css?v=20260722-security",
+  "./keypad-helpers.js?v=20260722-security",
+  "./app.js?v=20260722-security",
   "./manifest.json",
   "./manifest.webmanifest",
   "./app-icon.svg",
