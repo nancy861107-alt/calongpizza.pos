@@ -1,10 +1,10 @@
-const CACHE_NAME = "pos-system-20260722-security";
+const CACHE_NAME = "pos-system-20260722-gzip";
 const ASSETS = [
   "./",
   "./index.html",
-  "./styles.css?v=20260722-security",
-  "./keypad-helpers.js?v=20260722-security",
-  "./app.js?v=20260722-security",
+  "./styles.css?v=20260722-gzip",
+  "./keypad-helpers.js?v=20260722-gzip",
+  "./app.js?v=20260722-gzip",
   "./manifest.json",
   "./manifest.webmanifest",
   "./app-icon.svg",

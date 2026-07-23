@@ -2,6 +2,25 @@ const http = require("http");
 const fs = require("fs");
 const path = require("path");
 const crypto = require("crypto");
+const zlib = require("zlib");
+
+function acceptsGzip(request) {
+  return /\bgzip\b/.test(request.headers["accept-encoding"] || "");
+}
+
+// gzip large text payloads (the full-DB sync is ~300KB uncompressed and each
+// device pulls it every 5s). Small bodies skip compression — not worth the CPU.
+function sendMaybeGzip(request, response, status, headers, body) {
+  const buffer = Buffer.isBuffer(body) ? body : Buffer.from(body);
+  if (buffer.length >= 1024 && acceptsGzip(request)) {
+    const gz = zlib.gzipSync(buffer);
+    response.writeHead(status, { ...headers, "Content-Encoding": "gzip", Vary: "Accept-Encoding" });
+    response.end(gz);
+    return;
+  }
+  response.writeHead(status, headers);
+  response.end(buffer);
+}
 
 const PORT = Number(process.env.PORT || 8090);
 const HOST = process.env.HOST || "0.0.0.0";
@@ -959,7 +978,7 @@ async function handleApi(request, response, url) {
   }
 
   if (url.pathname === "/api/storage" && request.method === "GET") {
-    sendJson(response, 200, readDb());
+    sendMaybeGzip(request, response, 200, { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store" }, JSON.stringify(readDb()));
     return;
   }
 
@@ -990,10 +1009,17 @@ function handleStatic(request, response, url) {
   }
 
   const extension = path.extname(filePath);
-  response.writeHead(200, {
+  const headers = {
     "Content-Type": MIME_TYPES[extension] || "application/octet-stream",
     "Cache-Control": extension === ".html" ? "no-store" : "public, max-age=60",
-  });
+  };
+  // Compress text assets; images/audio are already compressed, stream them raw.
+  const compressible = [".html", ".css", ".js", ".json", ".webmanifest", ".svg"].includes(extension);
+  if (compressible) {
+    sendMaybeGzip(request, response, 200, headers, fs.readFileSync(filePath));
+    return;
+  }
+  response.writeHead(200, headers);
   fs.createReadStream(filePath).pipe(response);
 }
 
