@@ -657,7 +657,20 @@ function checkout() {
     return;
   }
 
-  const currentTotals = totals();
+  let currentTotals = totals();
+  if (currentTotals.cashReceived < currentTotals.total) {
+    const rawCashReceived = String(els.cashReceivedInput.value || "").trim();
+    const shouldAutoFillCash = rawCashReceived === "" || Number(rawCashReceived) === 0;
+    if (shouldAutoFillCash) {
+      els.cashReceivedInput.value = String(currentTotals.total);
+      currentTotals = totals();
+      renderTotals();
+    } else {
+      alert("收到現金不足。");
+      return;
+    }
+  }
+
   if (currentTotals.cashReceived < currentTotals.total) {
     alert("收到現金不足。");
     return;
