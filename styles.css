@@ -941,9 +941,10 @@ select {
   body[data-view="checkout"] .product-grid {
     flex: 1 1 auto;
     min-height: 0;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
     align-content: start;
     align-items: start;
-    grid-auto-rows: minmax(136px, auto);
+    grid-auto-rows: minmax(112px, auto);
     overflow-y: auto;
     overscroll-behavior: contain;
     padding: 0 4px 78px 0;
@@ -951,7 +952,21 @@ select {
 
   body[data-view="checkout"] .product-card {
     align-self: start;
-    min-height: 136px;
+    min-height: 112px;
+    gap: 6px;
+    padding: 12px 10px 10px;
+  }
+
+  body[data-view="checkout"] .product-name {
+    font-size: 16px;
+  }
+
+  body[data-view="checkout"] .product-meta {
+    font-size: 11px;
+  }
+
+  body[data-view="checkout"] .product-price {
+    font-size: 20px;
   }
 
   body[data-view="checkout"] .cart-list {
