@@ -606,6 +606,8 @@ select {
 
 .cart-list {
   display: grid;
+  align-content: start;
+  grid-auto-rows: max-content;
   gap: 8px;
   min-height: 190px;
   max-height: 42vh;
@@ -628,7 +630,7 @@ select {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
   gap: 8px;
-  padding: 10px;
+  padding: 8px;
   border: 1px solid var(--line);
   border-radius: var(--radius-md);
   background: #fbfcfd;
@@ -655,8 +657,8 @@ select {
 .remove-button {
   display: grid;
   place-items: center;
-  width: 34px;
-  height: 34px;
+  width: 32px;
+  height: 32px;
   border-radius: 999px;
   background: var(--panel-soft);
   color: var(--ink);
@@ -674,8 +676,8 @@ select {
 }
 
 .quantity-value-button {
-  min-width: 40px;
-  height: 34px;
+  min-width: 36px;
+  height: 32px;
   border: 1px solid var(--line);
   border-radius: 8px;
   background: white;
