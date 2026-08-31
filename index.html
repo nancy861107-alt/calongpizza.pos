@@ -16,7 +16,7 @@
     <link rel="apple-touch-icon" sizes="512x512" href="./icon-512.png" />
     <link rel="icon" href="./app-icon.svg" type="image/svg+xml" />
     <link rel="icon" href="./icon-192.png" type="image/png" />
-    <link rel="stylesheet" href="./styles.css?v=20260829-compact-cart-items" />
+    <link rel="stylesheet" href="./styles.css?v=20260831-transaction-sync" />
   </head>
   <body data-view="checkout">
     <div class="app-shell">
@@ -76,6 +76,7 @@
               <div class="panel-heading">
                 <div class="cart-heading-actions">
                   <span id="cartCount" class="pill">0 件</span>
+                  <span class="sync-status" id="syncStatus" data-state="local">僅此裝置</span>
                   <button class="ghost-button small" type="button" id="clearCartButton" title="清空購物車">清空</button>
                 </div>
               </div>
@@ -445,7 +446,8 @@
       <img src="./calong-logo.jpg" alt="" />
     </button>
 
-    <script src="./keypad-helpers.js?v=20260722-gzip"></script>
-    <script src="./app.js?v=20260829-compact-cart-items"></script>
+    <script src="./keypad-helpers.js?v=20260831-transaction-sync"></script>
+    <script src="./transaction-sync-helpers.js?v=20260831-transaction-sync"></script>
+    <script src="./app.js?v=20260831-transaction-sync"></script>
   </body>
 </html>

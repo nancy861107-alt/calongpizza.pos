@@ -70,6 +70,9 @@ const cloudSync = {
   lastSnapshot: "",
 };
 
+const PENDING_SALE_OPS_KEY = "pos-pending-sale-ops";
+let saleSyncFlushing = false;
+
 let checkoutAudioContext = null;
 
 let adminDraggingCard = null;
@@ -136,6 +139,7 @@ const els = {
   productCategorySelect: document.querySelector("#productCategorySelect"),
   cartList: document.querySelector("#cartList"),
   cartCount: document.querySelector("#cartCount"),
+  syncStatus: document.querySelector("#syncStatus"),
   discountRuleText: document.querySelector("#discountRuleText"),
   addCheeseButton: document.querySelector("#addCheeseButton"),
   cancelDiscountButton: document.querySelector("#cancelDiscountButton"),
@@ -208,7 +212,73 @@ function load(key, fallback) {
 
 function save(key, value) {
   localStorage.setItem(key, JSON.stringify(value));
-  saveCloudValue(key, value);
+  if (key !== "pos-sales") saveCloudValue(key, value);
+}
+
+function pendingSaleOps() {
+  return TransactionSyncHelpers.normalizePendingSaleOps(load(PENDING_SALE_OPS_KEY, []));
+}
+
+function savePendingSaleOps(operations) {
+  localStorage.setItem(PENDING_SALE_OPS_KEY, JSON.stringify(operations));
+  renderSyncStatus();
+}
+
+function renderSyncStatus() {
+  if (!els.syncStatus) return;
+  const status = TransactionSyncHelpers.syncStatus({
+    enabled: cloudSync.enabled,
+    online: navigator.onLine,
+    flushing: saleSyncFlushing,
+    pendingCount: pendingSaleOps().length,
+  });
+  els.syncStatus.dataset.state = status.state;
+  els.syncStatus.textContent = status.text;
+}
+
+function enqueueSaleUpsert(sale) {
+  savePendingSaleOps(TransactionSyncHelpers.queueSaleUpsert(
+    pendingSaleOps(),
+    sale,
+    makeId(),
+    new Date().toISOString()
+  ));
+}
+
+function enqueueSaleDelete(saleId) {
+  savePendingSaleOps(TransactionSyncHelpers.queueSaleDelete(
+    pendingSaleOps(),
+    saleId,
+    makeId(),
+    new Date().toISOString()
+  ));
+}
+
+async function flushPendingSaleOps() {
+  if (!cloudSync.enabled || !navigator.onLine || saleSyncFlushing) return false;
+  saleSyncFlushing = true;
+  renderSyncStatus();
+  try {
+    for (const operation of pendingSaleOps()) {
+      const response = await fetch(`/api/sales/${encodeURIComponent(operation.saleId)}`, {
+        method: operation.type === "delete" ? "DELETE" : "PUT",
+        headers: operation.type === "upsert" ? { "Content-Type": "application/json" } : undefined,
+        body: operation.type === "upsert" ? JSON.stringify(operation.sale) : undefined,
+      });
+      if (response.status === 401) {
+        window.location.href = "/login";
+        return false;
+      }
+      if (!response.ok) return false;
+      savePendingSaleOps(pendingSaleOps().filter((item) => item.id !== operation.id));
+    }
+    return true;
+  } catch {
+    return false;
+  } finally {
+    saleSyncFlushing = false;
+    renderSyncStatus();
+  }
 }
 
 function syncStateFromStorage() {
@@ -267,9 +337,15 @@ async function syncFromCloud(options = {}) {
     if (!response.ok) throw new Error("Cloud storage unavailable");
     const data = await response.json();
     shouldSeedCloud = Object.keys(data).length === 0;
+    const operations = pendingSaleOps();
+    const hasCloudSales = Array.isArray(data["pos-sales"]);
+    const mergedSales = TransactionSyncHelpers.applyPendingSaleOps(
+      hasCloudSales ? data["pos-sales"] : [],
+      operations
+    );
     // Rebuilding the whole UI destroys buttons mid-tap, so skip everything
     // when the cloud data is identical to the previous sync.
-    const snapshot = JSON.stringify(data);
+    const snapshot = JSON.stringify({ data, operations });
     if (!shouldSeedCloud && snapshot === cloudSync.lastSnapshot) {
       cloudSync.ready = true;
       return;
@@ -277,10 +353,14 @@ async function syncFromCloud(options = {}) {
     cloudSync.lastSnapshot = snapshot;
     // Keep the untrimmed cloud history in memory: reports need every day,
     // while state.sales/localStorage only retain today.
-    if (Array.isArray(data["pos-sales"])) state.historySales = data["pos-sales"];
+    if (hasCloudSales || operations.length > 0) state.historySales = mergedSales;
     Object.entries(data).forEach(([key, value]) => {
+      if (key === "pos-sales") return;
       localStorage.setItem(key, JSON.stringify(value));
     });
+    if (hasCloudSales || operations.length > 0) {
+      localStorage.setItem("pos-sales", JSON.stringify(mergedSales));
+    }
     cloudSync.ready = true;
     syncStateFromStorage();
     if (options.render !== false) renderAll();
@@ -292,8 +372,9 @@ async function syncFromCloud(options = {}) {
   if (shouldSeedCloud && cloudSync.ready) {
     saveCloudValue("pos-products", state.products);
     saveCloudValue("pos-categories", state.categories);
-    saveCloudValue("pos-sales", state.sales);
     saveCloudValue("pos-settings", state.settings);
+    state.sales.forEach(enqueueSaleUpsert);
+    void flushPendingSaleOps();
   }
 }
 
@@ -686,6 +767,8 @@ function checkout() {
 
   state.sales.unshift(sale);
   save("pos-sales", state.sales);
+  enqueueSaleUpsert(sale);
+  void flushPendingSaleOps();
   playCheckoutSound();
   state.cart = [];
   state.discountCanceled = false;
@@ -1526,6 +1609,8 @@ function deleteSale(saleId) {
   if (!confirm(`確定刪除 ${time} 這筆交易？刪除後報表金額會同步更新。`)) return;
   state.sales = state.sales.filter((item) => item.id !== saleId);
   save("pos-sales", state.sales);
+  enqueueSaleDelete(saleId);
+  void flushPendingSaleOps();
   renderSales();
   renderTransactionDetails();
 }
@@ -2295,11 +2380,21 @@ preventAppZoomGestures();
 initEvents();
 initSidebarToggle();
 renderAll();
-syncFromCloud();
+renderSyncStatus();
+void flushPendingSaleOps().then(() => syncFromCloud({ render: true }));
 tickClock();
 setInterval(tickClock, 1000);
 setInterval(checkDailySalesExpiration, 60000);
-setInterval(() => syncFromCloud({ render: true }), 5000);
+setInterval(async () => {
+  await flushPendingSaleOps();
+  await syncFromCloud({ render: true });
+}, 5000);
+
+window.addEventListener("online", () => {
+  renderSyncStatus();
+  void flushPendingSaleOps().then(() => syncFromCloud({ render: true }));
+});
+window.addEventListener("offline", renderSyncStatus);
 
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {

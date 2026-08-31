@@ -1,10 +1,11 @@
-const CACHE_NAME = "pos-system-20260722-gzip";
+const CACHE_NAME = "pos-system-20260831-transaction-sync";
 const ASSETS = [
   "./",
   "./index.html",
-  "./styles.css?v=20260722-gzip",
-  "./keypad-helpers.js?v=20260722-gzip",
-  "./app.js?v=20260722-gzip",
+  "./styles.css?v=20260831-transaction-sync",
+  "./keypad-helpers.js?v=20260831-transaction-sync",
+  "./transaction-sync-helpers.js?v=20260831-transaction-sync",
+  "./app.js?v=20260831-transaction-sync",
   "./manifest.json",
   "./manifest.webmanifest",
   "./app-icon.svg",
