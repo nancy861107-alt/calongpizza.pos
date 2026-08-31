@@ -6,6 +6,6 @@
   "scripts": {
     "start": "node server.js",
     "preview": "HOST=127.0.0.1 PORT=4173 node server.js",
-    "test": "node tests/keypad-helpers.test.js && node tests/sales-store.test.js && node tests/server-sales-api.test.js"
+    "test": "node tests/keypad-helpers.test.js && node tests/sales-store.test.js && node tests/server-sales-api.test.js && node tests/transaction-sync-helpers.test.js"
   }
 }
