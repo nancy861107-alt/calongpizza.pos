@@ -989,7 +989,6 @@ async function handleApi(request, response, url) {
       sendJson(response, 400, { error: "交易編號不可空白" });
       return;
     }
-    const db = readDb();
     if (request.method === "PUT") {
       let sale;
       try {
@@ -1003,12 +1002,14 @@ async function handleApi(request, response, url) {
         sendJson(response, 400, { error: validation.error });
         return;
       }
+      const db = readDb();
       db["pos-sales"] = upsertSale(db["pos-sales"], sale);
       writeDb(db);
       sendJson(response, 200, { ok: true });
       return;
     }
     if (request.method === "DELETE") {
+      const db = readDb();
       db["pos-sales"] = deleteSale(db["pos-sales"], saleId);
       writeDb(db);
       sendJson(response, 200, { ok: true });

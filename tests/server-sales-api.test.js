@@ -2,6 +2,7 @@ const assert = require("assert");
 const fs = require("fs");
 const os = require("os");
 const path = require("path");
+const http = require("http");
 const { spawn } = require("child_process");
 
 const dataDir = fs.mkdtempSync(path.join(os.tmpdir(), "calong-pos-api-"));
@@ -34,15 +35,34 @@ function sale(id, total) {
   try {
     await ready;
     const base = `http://127.0.0.1:${port}`;
-    for (const value of [sale("sale-a", 80), sale("sale-b", 90), sale("sale-a", 80)]) {
+    const putSale = async (value) => {
       const response = await fetch(`${base}/api/sales/${value.id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(value),
       });
       assert.strictEqual(response.status, 200);
-    }
+    };
+    const putSaleSlowly = (value) => new Promise((resolve, reject) => {
+      const body = JSON.stringify(value);
+      const request = http.request(`${base}/api/sales/${value.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json", "Content-Length": Buffer.byteLength(body) },
+      }, (response) => {
+        response.resume();
+        response.once("end", () => response.statusCode === 200
+          ? resolve()
+          : reject(new Error(`PUT failed ${response.statusCode}`)));
+      });
+      request.once("error", reject);
+      request.write(body.slice(0, 1));
+      setTimeout(() => request.end(body.slice(1)), 30);
+    });
+    await Promise.all([putSaleSlowly(sale("sale-a", 80)), putSaleSlowly(sale("sale-b", 90))]);
     let storage = await (await fetch(`${base}/api/storage`)).json();
+    assert.deepStrictEqual(storage["pos-sales"].map((item) => item.id).sort(), ["sale-a", "sale-b"]);
+    await putSale(sale("sale-a", 80));
+    storage = await (await fetch(`${base}/api/storage`)).json();
     assert.deepStrictEqual(storage["pos-sales"].map((item) => item.id).sort(), ["sale-a", "sale-b"]);
     assert.strictEqual((await fetch(`${base}/api/sales/sale-a`, { method: "DELETE" })).status, 200);
     assert.strictEqual((await fetch(`${base}/api/sales/sale-a`, { method: "DELETE" })).status, 200);
