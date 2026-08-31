@@ -3,6 +3,7 @@ const fs = require("fs");
 const path = require("path");
 const crypto = require("crypto");
 const zlib = require("zlib");
+const { validateSale, upsertSale, deleteSale } = require("./sales-store.js");
 
 function acceptsGzip(request) {
   return /\bgzip\b/.test(request.headers["accept-encoding"] || "");
@@ -980,6 +981,39 @@ async function handleApi(request, response, url) {
   if (url.pathname === "/api/storage" && request.method === "GET") {
     sendMaybeGzip(request, response, 200, { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store" }, JSON.stringify(readDb()));
     return;
+  }
+
+  if (url.pathname.startsWith("/api/sales/")) {
+    const saleId = decodeURIComponent(url.pathname.slice("/api/sales/".length));
+    if (!saleId) {
+      sendJson(response, 400, { error: "交易編號不可空白" });
+      return;
+    }
+    const db = readDb();
+    if (request.method === "PUT") {
+      let sale;
+      try {
+        sale = JSON.parse(await readBody(request));
+      } catch {
+        sendJson(response, 400, { error: "交易 JSON 格式錯誤" });
+        return;
+      }
+      const validation = validateSale(sale, saleId);
+      if (!validation.ok) {
+        sendJson(response, 400, { error: validation.error });
+        return;
+      }
+      db["pos-sales"] = upsertSale(db["pos-sales"], sale);
+      writeDb(db);
+      sendJson(response, 200, { ok: true });
+      return;
+    }
+    if (request.method === "DELETE") {
+      db["pos-sales"] = deleteSale(db["pos-sales"], saleId);
+      writeDb(db);
+      sendJson(response, 200, { ok: true });
+      return;
+    }
   }
 
   if (url.pathname.startsWith("/api/storage/") && request.method === "PUT") {
