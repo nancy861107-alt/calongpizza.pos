@@ -30,7 +30,9 @@ http://192.168.68.59:8090/?v=discount-count-only
 - `/api/storage` 資料同步 API
 - 主機端資料庫檔案 `data/cloud-storage.json`
 
-多台 iPad 只要開同一個主機網址，就會共用同一份資料。每台 iPad 會定時同步主機資料；結帳、商品、分類、日報表異動也會寫回主機。
+多台 iPad 只要開同一個主機網址，就會共用同一份資料。結帳與刪除會依交易 ID 逐筆同步，不會用整天資料互相覆蓋。若網路暫時中斷，交易會先留在該台 iPad，畫面顯示「尚未同步」或「離線」，恢復連線後自動補傳。
+
+商品、分類、日報表輸入值等其他資料仍透過 `/api/storage` 同步。直接用 `file://` 開啟 `index.html` 時只會儲存在該裝置，不會連到 Render；需要共用資料時請使用 Render 網址或連到 Render 的 iPad App。
 
 ## 只把報表傳回家裡電腦
 
@@ -73,7 +75,7 @@ POS_PASSWORD=自己設定一組安全密碼
 ./data/cloud-storage.json
 ```
 
-免費暫存資料可能在重新部署、重啟或休眠後消失；正式收銀建議改用永久磁碟。
+免費暫存資料可能在重新部署、重啟或休眠後消失，因此必須啟用專案既有的 Google Drive 備份與啟動還原。逐筆同步可避免多台 iPad 互相覆蓋，但不能取代備份；Render 重新建立主機時，仍由 Google Drive 還原 `cloud-storage.json`。
 
 正式外網使用時，一定要設定 `POS_USER` 和 `POS_PASSWORD`，否則任何知道網址的人都能打開系統。
 

@@ -34,7 +34,7 @@
 - Produces: `upsertSale(sales, sale): Array<Sale>`
 - Produces: `deleteSale(sales, saleId): Array<Sale>`
 
-- [ ] **Step 1: Write the failing store tests**
+- [x] **Step 1: Write the failing store tests**
 
 Create `tests/sales-store.test.js` with literal fixtures and assertions for two distinct sales, duplicate upsert, exact deletion, repeated deletion, and malformed input:
 
@@ -65,13 +65,13 @@ assert.strictEqual(validateSale({ ...first, items: [] }, "sale-a").ok, false);
 console.log("sales store ok");
 ```
 
-- [ ] **Step 2: Run the test and verify it fails because the module is missing**
+- [x] **Step 2: Run the test and verify it fails because the module is missing**
 
 Run: `node tests/sales-store.test.js`
 
 Expected: FAIL with `Cannot find module '../sales-store.js'`.
 
-- [ ] **Step 3: Implement the pure store helpers**
+- [x] **Step 3: Implement the pure store helpers**
 
 Create `sales-store.js`. Validate the ID match, parseable date, non-empty item list, positive integer quantities, non-negative finite prices, cash payment, and finite totals. Return new arrays without mutating inputs.
 
@@ -105,7 +105,7 @@ function deleteSale(sales, saleId) {
 module.exports = { validateSale, upsertSale, deleteSale };
 ```
 
-- [ ] **Step 4: Add the test to the project test command and verify green**
+- [x] **Step 4: Add the test to the project test command and verify green**
 
 Change `package.json`:
 
@@ -117,7 +117,7 @@ Run: `npm test`
 
 Expected: `keypad helpers ok` and `sales store ok` with exit code 0.
 
-- [ ] **Step 5: Commit the store helper**
+- [x] **Step 5: Commit the store helper**
 
 ```bash
 git add sales-store.js tests/sales-store.test.js package.json
@@ -137,7 +137,7 @@ git commit -m "Add transaction store helpers"
 - Consumes: `validateSale`, `upsertSale`, and `deleteSale` from `sales-store.js`
 - Produces: `PUT /api/sales/:id` and `DELETE /api/sales/:id`
 
-- [ ] **Step 1: Write the failing API integration test**
+- [x] **Step 1: Write the failing API integration test**
 
 Create `tests/server-sales-api.test.js`. Start `server.js` with a temporary `DATA_DIR`, wait for its ready line, send two different sales, repeat one sale, delete one sale twice, and inspect `/api/storage`.
 
@@ -204,13 +204,13 @@ function sale(id, total) {
 });
 ```
 
-- [ ] **Step 2: Run the API test and verify the endpoint is missing**
+- [x] **Step 2: Run the API test and verify the endpoint is missing**
 
 Run: `node tests/server-sales-api.test.js`
 
 Expected: FAIL because `PUT /api/sales/sale-a` returns 404.
 
-- [ ] **Step 3: Implement the API routes**
+- [x] **Step 3: Implement the API routes**
 
 At the top of `server.js`, import:
 
@@ -246,7 +246,7 @@ Before the generic storage routes in `handleApi`, match `/api/sales/:id`. Decode
   }
 ```
 
-- [ ] **Step 4: Add the integration test to `npm test` and verify all tests**
+- [x] **Step 4: Add the integration test to `npm test` and verify all tests**
 
 Change `package.json`:
 
@@ -258,7 +258,7 @@ Run: `npm test`
 
 Expected: all three success lines and exit code 0.
 
-- [ ] **Step 5: Commit the API**
+- [x] **Step 5: Commit the API**
 
 ```bash
 git add server.js tests/server-sales-api.test.js package.json
@@ -281,7 +281,7 @@ git commit -m "Add per-transaction sales API"
 - Produces: `applyPendingSaleOps(cloudSales, ops): Array<Sale>`
 - Produces: `syncStatus({ enabled, online, flushing, pendingCount }): { state: string, text: string }`
 
-- [ ] **Step 1: Write failing helper tests**
+- [x] **Step 1: Write failing helper tests**
 
 Create `tests/transaction-sync-helpers.test.js` with literal operations that prove latest-operation compaction, pending upsert/delete merge, malformed queue filtering, and all status labels.
 
@@ -307,13 +307,13 @@ assert.strictEqual(helpers.syncStatus({ enabled: true, online: true, flushing: f
 console.log("transaction sync helpers ok");
 ```
 
-- [ ] **Step 2: Run the helper test and verify it fails because the module is missing**
+- [x] **Step 2: Run the helper test and verify it fails because the module is missing**
 
 Run: `node tests/transaction-sync-helpers.test.js`
 
 Expected: FAIL with `Cannot find module '../transaction-sync-helpers.js'`.
 
-- [ ] **Step 3: Implement the UMD-style helper**
+- [x] **Step 3: Implement the UMD-style helper**
 
 Use the same browser/CommonJS attachment pattern as `keypad-helpers.js`. Queue functions remove earlier operations for the same sale ID, then append one validated operation. `applyPendingSaleOps` starts from cloud order, replaces upserts by ID, removes deletes, and places newly upserted sales first.
 
@@ -359,7 +359,7 @@ Use the same browser/CommonJS attachment pattern as `keypad-helpers.js`. Queue f
 })(typeof window !== "undefined" ? window : globalThis);
 ```
 
-- [ ] **Step 4: Add the helper test and verify all tests**
+- [x] **Step 4: Add the helper test and verify all tests**
 
 Append `node tests/transaction-sync-helpers.test.js` to the `npm test` command.
 
@@ -367,7 +367,7 @@ Run: `npm test`
 
 Expected: four success lines and exit code 0.
 
-- [ ] **Step 5: Commit the browser helper**
+- [x] **Step 5: Commit the browser helper**
 
 ```bash
 git add transaction-sync-helpers.js tests/transaction-sync-helpers.test.js package.json
@@ -389,7 +389,7 @@ git commit -m "Add offline transaction queue helpers"
 - Produces: persistent `pos-pending-sale-ops`
 - Produces: `enqueueSaleUpsert`, `enqueueSaleDelete`, `flushPendingSaleOps`, `renderSyncStatus`
 
-- [ ] **Step 1: Load the helper and add the status element**
+- [x] **Step 1: Load the helper and add the status element**
 
 Load `transaction-sync-helpers.js` before `app.js` and add this beside the cart count/clear controls:
 
@@ -419,7 +419,7 @@ Add restrained status styles that use the existing blue, amber, red, and green r
 .sync-status[data-state="offline"] { color: #b91c1c; border-color: #fecaca; background: #fef2f2; }
 ```
 
-- [ ] **Step 2: Add queue state and persistence functions**
+- [x] **Step 2: Add queue state and persistence functions**
 
 Add `PENDING_SALE_OPS_KEY = "pos-pending-sale-ops"`, a separate `saleSyncFlushing` flag, `syncStatus` to `els`, and functions that load, save, render, enqueue, and remove pending operations. Use `makeId()` and `new Date().toISOString()` for operation metadata.
 
@@ -461,7 +461,7 @@ function enqueueSaleDelete(saleId) {
 }
 ```
 
-- [ ] **Step 3: Implement sequential queue flushing**
+- [x] **Step 3: Implement sequential queue flushing**
 
 `flushPendingSaleOps` returns immediately for `file://`, offline state, or an active flush. For each current operation, call the sales endpoint. On 200, remove only that operation ID. On 401, navigate to `/login`. On other failures, stop and leave all remaining operations queued.
 
@@ -494,7 +494,7 @@ async function flushPendingSaleOps() {
 }
 ```
 
-- [ ] **Step 4: Stop whole-day writes and merge pending operations on pull**
+- [x] **Step 4: Stop whole-day writes and merge pending operations on pull**
 
 Change `save(key, value)` so `pos-sales` is local-only. In `syncFromCloud`, apply pending operations to downloaded `pos-sales` before updating local storage and `state.historySales`. When cloud storage is empty, enqueue each local sale instead of calling the legacy whole-day save.
 
@@ -513,7 +513,7 @@ state.sales = [...remoteSales];
 state.historySales = [...remoteSales];
 ```
 
-- [ ] **Step 5: Queue checkout and deletion**
+- [x] **Step 5: Queue checkout and deletion**
 
 After adding a checkout sale to local storage, call `enqueueSaleUpsert(sale)` and invoke `flushPendingSaleOps()` without delaying the visible checkout completion. After confirmed deletion, call `enqueueSaleDelete(saleId)` and invoke the same flush.
 
@@ -529,7 +529,7 @@ enqueueSaleDelete(saleId);
 void flushPendingSaleOps();
 ```
 
-- [ ] **Step 6: Add lifecycle retries**
+- [x] **Step 6: Add lifecycle retries**
 
 At startup, render the status and call `flushPendingSaleOps()` before/alongside the first cloud pull. Every five seconds, flush pending operations before pulling cloud state. Add:
 
@@ -548,7 +548,7 @@ setInterval(async () => {
 }, 5000);
 ```
 
-- [ ] **Step 7: Bump asset versions and run syntax/unit tests**
+- [x] **Step 7: Bump asset versions and run syntax/unit tests**
 
 Use one new version string for `styles.css`, `transaction-sync-helpers.js`, and `app.js` in `index.html`.
 
@@ -562,7 +562,7 @@ npm test
 
 Expected: both syntax checks and all tests pass.
 
-- [ ] **Step 8: Commit client integration**
+- [x] **Step 8: Commit client integration**
 
 ```bash
 git add index.html styles.css app.js
@@ -580,11 +580,11 @@ git commit -m "Sync checkout transactions individually"
 **Interfaces:**
 - Verifies all interfaces produced by Tasks 1-4
 
-- [ ] **Step 1: Document the final storage behavior**
+- [x] **Step 1: Document the final storage behavior**
 
 Update README to state that transactions sync individually, offline operations remain on the device until confirmed, daily sheet values still use `/api/storage`, Render free disk remains temporary, and Google Drive backup must be enabled.
 
-- [ ] **Step 2: Run the complete automated verification**
+- [x] **Step 2: Run the complete automated verification**
 
 Run:
 
@@ -597,7 +597,7 @@ git diff --check
 
 Expected: every command exits 0.
 
-- [ ] **Step 3: Verify browser behavior at iPad landscape size**
+- [x] **Step 3: Verify browser behavior at iPad landscape size**
 
 Start `npm run preview`, open `http://127.0.0.1:4173/` at 1024x768, complete a checkout, and verify:
 
@@ -608,11 +608,11 @@ Start `npm run preview`, open `http://127.0.0.1:4173/` at 1024x768, complete a c
 - daily and monthly report views still render;
 - the page and checkout button do not overflow.
 
-- [ ] **Step 4: Verify offline retry**
+- [x] **Step 4: Verify offline retry**
 
 Run the page from `file://` and confirm the indicator says `僅此裝置`. For the HTTP preview, stop the server after the page loads, complete one checkout, confirm `尚未同步 1 筆` or `離線 1 筆`, restart the server, and confirm the queued sale uploads exactly once.
 
-- [ ] **Step 5: Commit documentation and final verification state**
+- [x] **Step 5: Commit documentation and final verification state**
 
 ```bash
 git add README.md docs/superpowers/plans/2026-08-31-transaction-sync.md
