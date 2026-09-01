@@ -619,6 +619,6 @@ git add README.md docs/superpowers/plans/2026-08-31-transaction-sync.md
 git commit -m "Document reliable transaction sync"
 ```
 
-- [ ] **Step 6: Push only after final review**
+- [x] **Step 6: Push only after final review**
 
 Review `git log`, `git status`, and the complete diff from the pre-feature commit. Push `main` to GitHub so Render deploys the server and client together.
