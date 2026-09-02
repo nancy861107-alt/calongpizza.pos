@@ -998,7 +998,9 @@ select {
   }
 
   body[data-view="checkout"] .product-name {
-    font-size: 18px;
+    font-size: 25px;
+    line-height: 1.15;
+    overflow-wrap: anywhere;
   }
 
   body[data-view="checkout"] .product-meta {
