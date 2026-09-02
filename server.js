@@ -566,7 +566,10 @@ function rowsForCategory(categoryName, products, sales) {
   });
 
   const categoryProducts = products.filter((product) => product.category === categoryName);
-  if (categoryProducts.length === 0) return [["商品後台尚無品項", "", ""]];
+  // The cheese addon uses its own 加購 category; surface it under 飲料 (matches
+  // the in-app daily/month report).
+  const showCheeseRow = categoryName === "飲料";
+  if (categoryProducts.length === 0 && !showCheeseRow) return [["商品後台尚無品項", "", ""]];
   let totalQuantity = 0;
   let totalAmount = 0;
   const rows = categoryProducts.map((product) => {
@@ -576,6 +579,20 @@ function rowsForCategory(categoryName, products, sales) {
     totalAmount += amount;
     return [product.name, sold.quantity, amount];
   });
+  if (showCheeseRow) {
+    const cheese = { quantity: 0, amount: 0 };
+    sales.forEach((sale) => {
+      (sale.items || []).forEach((item) => {
+        if (item.id !== "addon-cheese-double" && item.name !== "起士加倍") return;
+        cheese.quantity += Number(item.quantity) || 0;
+        cheese.amount += (Number(item.price) || 0) * (Number(item.quantity) || 0);
+      });
+    });
+    const amount = moneyNumber(cheese.amount);
+    totalQuantity += cheese.quantity;
+    totalAmount += amount;
+    rows.push(["起士加倍", cheese.quantity, amount]);
+  }
   rows.push(["總合", totalQuantity, totalAmount]);
   return rows;
 }
