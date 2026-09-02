@@ -653,7 +653,7 @@ function buildDailyTemplateRows({ date, categories, products, daySales, data }) 
     reportRow([], ["-預備金", "", reserveCash]),
     reportRow([], ["＝存銀金額", "", cashDeposit]),
     reportRow([], ["現金盤盈", "", cashDiff > 0 ? cashDiff : 0]),
-    reportRow([], ["現金盤筍", "", cashDiff < 0 ? Math.abs(cashDiff) : 0]),
+    reportRow([], ["現金盤損", "", cashDiff < 0 ? Math.abs(cashDiff) : 0]),
     blankReportRow(),
     reportRow([], ["來客數", daySales.length, "人"]),
     blankReportRow(),

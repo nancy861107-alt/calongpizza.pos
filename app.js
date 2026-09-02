@@ -1475,7 +1475,7 @@ function buildClientDailyExportRows() {
     exportRow([], ["-預備金", "", reserveCash]),
     exportRow([], ["＝存銀金額", "", cashDeposit]),
     exportRow([], ["現金盤盈", "", cashDiff > 0 ? cashDiff : 0]),
-    exportRow([], ["現金盤筍", "", cashDiff < 0 ? Math.abs(cashDiff) : 0]),
+    exportRow([], ["現金盤損", "", cashDiff < 0 ? Math.abs(cashDiff) : 0]),
     blankExportRow(),
     exportRow([], ["來客數", sales.length, "人"]),
     blankExportRow(),
