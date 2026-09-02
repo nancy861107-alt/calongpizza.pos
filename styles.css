@@ -984,7 +984,7 @@ select {
     grid-template-columns: repeat(3, minmax(0, 1fr));
     align-content: start;
     align-items: start;
-    grid-auto-rows: minmax(112px, auto);
+    grid-auto-rows: minmax(135px, auto);
     overflow-y: auto;
     overscroll-behavior: contain;
     padding: 0 4px 78px 0;
@@ -992,7 +992,7 @@ select {
 
   body[data-view="checkout"] .product-card {
     align-self: start;
-    min-height: 112px;
+    min-height: 135px;
     gap: 6px;
     padding: 12px 10px 10px;
   }
