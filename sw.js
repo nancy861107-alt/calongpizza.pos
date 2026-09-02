@@ -1,12 +1,11 @@
-const CACHE_NAME = "pos-system-20260902-all-products";
+const CACHE_NAME = "pos-system-20260902-cash-loss-label";
 const ASSETS = [
   "./",
   "./index.html",
-  "./styles.css?v=20260902-all-products",
+  "./styles.css?v=20260831-transaction-sync",
   "./keypad-helpers.js?v=20260831-transaction-sync",
   "./transaction-sync-helpers.js?v=20260831-transaction-sync",
-  "./checkout-display-helpers.js?v=20260902-all-products",
-  "./app.js?v=20260902-all-products",
+  "./app.js?v=20260902-cash-loss-label",
   "./manifest.json",
   "./manifest.webmanifest",
   "./app-icon.svg",

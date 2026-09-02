@@ -135,6 +135,7 @@ const els = {
   navButtons: document.querySelectorAll(".nav-button"),
   views: document.querySelectorAll(".view"),
   productGrid: document.querySelector("#productGrid"),
+  categoryTabs: document.querySelector("#categoryTabs"),
   productCategorySelect: document.querySelector("#productCategorySelect"),
   cartList: document.querySelector("#cartList"),
   cartCount: document.querySelector("#cartCount"),
@@ -424,7 +425,24 @@ function discountBreakdown() {
 function renderCategories() {
   const currentCategories = categories();
   const selectedProductCategory = normalizeCategoryName(productCategoryDraft || els.productCategorySelect.value);
+  if (!currentCategories.includes(state.selectedCategory)) {
+    state.selectedCategory = currentCategories[0] || "";
+  }
+
+  els.categoryTabs.innerHTML = "";
   els.productCategorySelect.innerHTML = "";
+
+  currentCategories.forEach((category) => {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "category-tab";
+    button.dataset.category = category;
+    button.textContent = category;
+    button.setAttribute("role", "tab");
+    button.setAttribute("aria-selected", String(state.selectedCategory === category));
+    button.classList.toggle("active", state.selectedCategory === category);
+    els.categoryTabs.append(button);
+  });
 
   currentCategories.forEach((category) => {
     const option = document.createElement("option");
@@ -441,7 +459,8 @@ function renderCategories() {
 }
 
 function renderProducts() {
-  const products = CheckoutDisplayHelpers.productsInCategoryOrder(state.products, categories());
+  const category = state.selectedCategory;
+  const products = productsByCategory(category);
 
   els.productGrid.innerHTML = "";
   products.forEach((product) => {
@@ -451,7 +470,7 @@ function renderProducts() {
     button.innerHTML = `
       <span class="product-color" style="background:${escapeHtml(product.color)}"></span>
       <span class="product-name">${escapeHtml(product.name)}</span>
-      <span class="product-category-badge">${escapeHtml(product.category)}</span>
+      <span class="product-meta">${escapeHtml(product.category)}</span>
       <span class="product-price">${money(product.price)}</span>
     `;
     button.addEventListener("click", () => addToCart(product.id));
@@ -459,7 +478,7 @@ function renderProducts() {
   });
 
   if (products.length === 0) {
-    els.productGrid.innerHTML = '<div class="empty-cart wide">商品後台尚無品項</div>';
+    els.productGrid.innerHTML = '<div class="empty-cart wide">沒有符合的品項</div>';
   }
 }
 
@@ -2017,6 +2036,13 @@ function switchView(viewName) {
 function initEvents() {
   els.navButtons.forEach((button) => {
     button.addEventListener("click", () => switchView(button.dataset.view));
+  });
+  els.categoryTabs.addEventListener("click", (event) => {
+    const button = event.target.closest("[data-category]");
+    if (!button) return;
+    state.selectedCategory = button.dataset.category;
+    renderCategories();
+    renderProducts();
   });
   els.cashReceivedInput.addEventListener("focus", clearQuantityEdit);
   els.cashReceivedInput.addEventListener("input", renderTotals);
