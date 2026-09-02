@@ -17,11 +17,14 @@
   --warm-ink: #92550a;
   --danger: #b42318;
   --danger-soft: #fdf1ef;
-  --radius-lg: 18px;
-  --radius-md: 13px;
+  --radius-lg: 20px;
+  --radius-md: 14px;
   --radius-sm: 10px;
-  --shadow: 0 1px 2px rgba(18, 28, 38, 0.05), 0 10px 30px rgba(18, 28, 38, 0.07);
-  --shadow-lift: 0 2px 4px rgba(18, 28, 38, 0.06), 0 16px 40px rgba(18, 28, 38, 0.12);
+  --shadow: 0 1px 1px rgba(18, 28, 38, 0.04), 0 4px 10px rgba(18, 28, 38, 0.05), 0 16px 34px rgba(18, 28, 38, 0.06);
+  --shadow-lift: 0 2px 4px rgba(18, 28, 38, 0.06), 0 10px 20px rgba(18, 28, 38, 0.09), 0 28px 52px rgba(18, 28, 38, 0.13);
+  --shadow-press: inset 0 2px 5px rgba(18, 28, 38, 0.12);
+  --ring-top: inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  --spring: cubic-bezier(0.34, 1.4, 0.5, 1);
 }
 
 * {
@@ -43,9 +46,9 @@ body {
   min-height: 100vh;
   color: var(--ink);
   background:
-    radial-gradient(1200px 500px at 85% -10%, rgba(29, 111, 184, 0.08), transparent 60%),
-    radial-gradient(900px 420px at -10% 108%, rgba(217, 119, 6, 0.06), transparent 55%),
-    var(--bg);
+    radial-gradient(1100px 520px at 88% -12%, rgba(29, 111, 184, 0.1), transparent 58%),
+    radial-gradient(880px 460px at -12% 112%, rgba(217, 119, 6, 0.07), transparent 55%),
+    linear-gradient(180deg, #f4f6f9, var(--bg));
   font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "PingFang TC", "Noto Sans TC", "Segoe UI", sans-serif;
   touch-action: manipulation;
   overscroll-behavior: none;
@@ -348,9 +351,9 @@ body.sidebar-collapsed .sidebar-fab {
 
 .primary-button,
 .checkout-button {
-  background: linear-gradient(135deg, #1f7cc9, var(--accent-strong));
+  background: linear-gradient(135deg, #2488d6, var(--accent-strong) 62%, #0f4670);
   color: white;
-  box-shadow: 0 6px 16px rgba(18, 80, 127, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.16);
+  box-shadow: 0 8px 20px rgba(18, 80, 127, 0.34), 0 2px 4px rgba(18, 80, 127, 0.24), inset 0 1px 0 rgba(255, 255, 255, 0.28);
 }
 
 .danger-button {
@@ -400,15 +403,15 @@ body.sidebar-collapsed .sidebar-fab {
 .table-wrap,
 .product-form,
 .summary-strip {
-  background: rgba(255, 255, 255, 0.92);
-  border: 1px solid rgba(225, 230, 235, 0.9);
+  background: linear-gradient(180deg, #ffffff, #fcfdfe);
+  border: 1px solid rgba(220, 226, 233, 0.9);
   border-radius: var(--radius-lg);
-  box-shadow: var(--shadow);
+  box-shadow: var(--shadow), var(--ring-top);
 }
 
 .product-panel,
 .cart-panel {
-  padding: 16px;
+  padding: 18px;
 }
 
 .product-panel {
@@ -499,18 +502,19 @@ select {
   overflow: hidden;
   touch-action: manipulation;
   user-select: none;
-  box-shadow: 0 1px 2px rgba(18, 28, 38, 0.04);
-  transition: transform 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+  box-shadow: 0 1px 2px rgba(18, 28, 38, 0.05), var(--ring-top);
+  transition: transform 0.18s var(--spring), border-color 0.15s ease, box-shadow 0.18s ease;
 }
 
 .product-card:hover {
-  transform: translateY(-2px);
-  border-color: var(--accent);
-  box-shadow: var(--shadow-lift);
+  transform: translateY(-3px);
+  border-color: rgba(29, 111, 184, 0.5);
+  box-shadow: var(--shadow-lift), var(--ring-top);
 }
 
 .product-card:active {
-  transform: scale(0.97);
+  transform: scale(0.96);
+  box-shadow: var(--shadow-press);
 }
 
 .product-color {
@@ -882,23 +886,24 @@ select {
   min-height: 48px;
   border: 1px solid var(--line);
   border-radius: var(--radius-sm);
-  background: #fafbfc;
+  background: linear-gradient(180deg, #ffffff, #f2f5f8);
   color: var(--ink);
   font-size: 19px;
   font-weight: 900;
   touch-action: manipulation;
-  box-shadow: 0 1px 2px rgba(18, 28, 38, 0.06), inset 0 -2px 0 rgba(18, 28, 38, 0.04);
+  box-shadow: 0 1px 2px rgba(18, 28, 38, 0.07), inset 0 1px 0 rgba(255, 255, 255, 0.9), inset 0 -2px 0 rgba(18, 28, 38, 0.05);
+  transition: transform 0.12s var(--spring), background 0.14s ease, box-shadow 0.14s ease;
 }
 
 .cash-keypad button:hover {
-  border-color: var(--accent);
+  border-color: rgba(29, 111, 184, 0.45);
   color: var(--accent-strong);
-  background: white;
 }
 
 .cash-keypad button:active {
+  transform: scale(0.94);
   background: var(--panel-soft);
-  box-shadow: inset 0 2px 3px rgba(18, 28, 38, 0.08);
+  box-shadow: var(--shadow-press);
 }
 
 .change-line strong {
