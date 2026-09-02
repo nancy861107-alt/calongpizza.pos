@@ -16,7 +16,7 @@
     <link rel="apple-touch-icon" sizes="512x512" href="./icon-512.png" />
     <link rel="icon" href="./app-icon.svg" type="image/svg+xml" />
     <link rel="icon" href="./icon-192.png" type="image/png" />
-    <link rel="stylesheet" href="./styles.css?v=20260831-transaction-sync" />
+    <link rel="stylesheet" href="./styles.css?v=20260902-all-products" />
   </head>
   <body data-view="checkout">
     <div class="app-shell">
@@ -67,7 +67,6 @@
         <section class="view active" id="checkoutView" aria-label="收銀畫面">
           <div class="checkout-grid">
             <section class="product-panel">
-              <div class="category-tabs" id="categoryTabs" role="tablist" aria-label="品項分類"></div>
               <div class="product-grid" id="productGrid"></div>
               <button class="ghost-button add-cheese-button floating-addon-button" type="button" id="addCheeseButton">起士加倍20元</button>
             </section>
@@ -448,6 +447,7 @@
 
     <script src="./keypad-helpers.js?v=20260831-transaction-sync"></script>
     <script src="./transaction-sync-helpers.js?v=20260831-transaction-sync"></script>
-    <script src="./app.js?v=20260902-cash-loss-label"></script>
+    <script src="./checkout-display-helpers.js?v=20260902-all-products"></script>
+    <script src="./app.js?v=20260902-all-products"></script>
   </body>
 </html>
