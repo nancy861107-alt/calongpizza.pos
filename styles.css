@@ -494,7 +494,8 @@ select {
   border: 1px solid var(--line);
   border-radius: var(--radius-md);
   background: white;
-  text-align: left;
+  text-align: center;
+  place-items: center;
   overflow: hidden;
   touch-action: manipulation;
   user-select: none;
@@ -536,7 +537,7 @@ select {
 }
 
 .product-price {
-  align-self: end;
+  align-self: center;
   color: var(--accent-strong);
   font-size: 23px;
   font-weight: 900;
@@ -1001,7 +1002,6 @@ select {
     font-size: 22px;
     line-height: 1.15;
     overflow-wrap: anywhere;
-    transform: translateY(6px);
   }
 
   body[data-view="checkout"] .product-meta {
