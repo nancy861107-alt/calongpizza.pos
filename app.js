@@ -1132,7 +1132,10 @@ function dailyCategoryRows(categoryName, sales) {
   });
 
   const products = productsByCategory(categoryName);
-  if (products.length === 0) return [{ empty: true }];
+  // The cheese addon has its own "加購" category, so it never lands in a real
+  // category table. Surface it as an extra row under 飲料.
+  const showCheeseRow = categoryName === "飲料";
+  if (products.length === 0 && !showCheeseRow) return [{ empty: true }];
 
   let totalQuantity = 0;
   let totalAmount = 0;
@@ -1142,6 +1145,19 @@ function dailyCategoryRows(categoryName, sales) {
     totalAmount += sold.amount;
     return { name: product.name, quantity: sold.quantity, amount: sold.amount };
   });
+  if (showCheeseRow) {
+    const cheese = { quantity: 0, amount: 0 };
+    sales.forEach((sale) => {
+      sale.items.forEach((item) => {
+        if (item.id !== cheeseAddonProduct.id && item.name !== cheeseAddonProduct.name) return;
+        cheese.quantity += item.quantity;
+        cheese.amount += item.price * item.quantity;
+      });
+    });
+    totalQuantity += cheese.quantity;
+    totalAmount += cheese.amount;
+    rows.push({ name: cheeseAddonProduct.name, quantity: cheese.quantity, amount: cheese.amount });
+  }
   rows.push({ name: "總合", quantity: totalQuantity, amount: totalAmount, total: true });
   return rows;
 }
