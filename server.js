@@ -847,7 +847,11 @@ function loginPage(message = "") {
 <html lang="zh-Hant">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-title" content="卡隆POS" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <title>卡隆收銀系統登入</title>
   <style>
     :root { color-scheme: light; font-family: -apple-system, BlinkMacSystemFont, "PingFang TC", "Noto Sans TC", "Segoe UI", sans-serif; }
