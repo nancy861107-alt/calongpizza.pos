@@ -1,11 +1,12 @@
-const CACHE_NAME = "pos-system-20260902-cheese-row";
+const CACHE_NAME = "pos-system-20260904-report-item-ids";
 const ASSETS = [
   "./",
   "./index.html",
   "./styles.css?v=20260902-cheese-row",
   "./keypad-helpers.js?v=20260831-transaction-sync",
   "./transaction-sync-helpers.js?v=20260831-transaction-sync",
-  "./app.js?v=20260902-cash-loss-label",
+  "./report-items.js?v=20260904-report-item-ids",
+  "./app.js?v=20260904-report-item-ids",
   "./manifest.json",
   "./manifest.webmanifest",
   "./app-icon.svg",

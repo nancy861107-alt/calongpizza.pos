@@ -4,6 +4,7 @@ const path = require("path");
 const crypto = require("crypto");
 const zlib = require("zlib");
 const { validateSale, upsertSale, deleteSale } = require("./sales-store.js");
+const { categoryProductSales } = require("./report-items.js");
 
 function acceptsGzip(request) {
   return /\bgzip\b/.test(request.headers["accept-encoding"] || "");
@@ -554,30 +555,19 @@ function xlsxBuffer(rows, sheetName = "日結單") {
 }
 
 function rowsForCategory(categoryName, products, sales) {
-  const soldMap = new Map();
-  sales.forEach((sale) => {
-    (sale.items || []).forEach((item) => {
-      if (item.category !== categoryName) return;
-      const current = soldMap.get(item.name) || { quantity: 0, amount: 0 };
-      current.quantity += Number(item.quantity) || 0;
-      current.amount += (Number(item.price) || 0) * (Number(item.quantity) || 0);
-      soldMap.set(item.name, current);
-    });
-  });
-
   const categoryProducts = products.filter((product) => product.category === categoryName);
+  const productSales = categoryProductSales(categoryName, products, sales);
   // The cheese addon uses its own 加購 category; surface it under 飲料 (matches
   // the in-app daily/month report).
   const showCheeseRow = categoryName === "飲料";
   if (categoryProducts.length === 0 && !showCheeseRow) return [["商品後台尚無品項", "", ""]];
   let totalQuantity = 0;
   let totalAmount = 0;
-  const rows = categoryProducts.map((product) => {
-    const sold = soldMap.get(product.name) || { quantity: 0, amount: 0 };
-    const amount = moneyNumber(sold.amount);
-    totalQuantity += Number(sold.quantity) || 0;
+  const rows = productSales.map(({ product, quantity, amount: rawAmount }) => {
+    const amount = moneyNumber(rawAmount);
+    totalQuantity += Number(quantity) || 0;
     totalAmount += amount;
-    return [product.name, sold.quantity, amount];
+    return [product.name, quantity, amount];
   });
   if (showCheeseRow) {
     const cheese = { quantity: 0, amount: 0 };

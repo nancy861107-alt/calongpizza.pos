@@ -1120,18 +1120,13 @@ function escapeXml(value) {
 }
 
 function dailyCategoryRows(categoryName, sales) {
-  const soldMap = new Map();
-  sales.forEach((sale) => {
-    sale.items.forEach((item) => {
-      if (normalizeCategoryName(item.category) !== categoryName) return;
-      const current = soldMap.get(item.name) || { quantity: 0, amount: 0 };
-      current.quantity += item.quantity;
-      current.amount += item.price * item.quantity;
-      soldMap.set(item.name, current);
-    });
-  });
-
   const products = productsByCategory(categoryName);
+  const productSales = ReportItems.categoryProductSales(
+    categoryName,
+    state.products,
+    sales,
+    normalizeCategoryName,
+  );
   // The cheese addon has its own "加購" category, so it never lands in a real
   // category table. Surface it as an extra row under 飲料.
   const showCheeseRow = categoryName === "飲料";
@@ -1139,11 +1134,10 @@ function dailyCategoryRows(categoryName, sales) {
 
   let totalQuantity = 0;
   let totalAmount = 0;
-  const rows = products.map((product) => {
-    const sold = soldMap.get(product.name) || { quantity: 0, amount: 0 };
-    totalQuantity += sold.quantity;
-    totalAmount += sold.amount;
-    return { name: product.name, quantity: sold.quantity, amount: sold.amount };
+  const rows = productSales.map(({ product, quantity, amount }) => {
+    totalQuantity += quantity;
+    totalAmount += amount;
+    return { name: product.name, quantity, amount };
   });
   if (showCheeseRow) {
     const cheese = { quantity: 0, amount: 0 };
